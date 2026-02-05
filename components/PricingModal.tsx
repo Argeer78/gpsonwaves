@@ -30,7 +30,8 @@ export default function PricingModal({ isOpen, onClose, triggerReason }: Pricing
                 const { loadStripe } = await import('@stripe/stripe-js');
                 const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
                 if (stripe) {
-                    await stripe.redirectToCheckout({ sessionId: data.sessionId });
+                    // @ts-ignore - Typescript definition verification issue
+                    await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
                 }
             } else {
                 console.error("No Session ID returned");
