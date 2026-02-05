@@ -16,14 +16,30 @@ export default function PricingModal({ isOpen, onClose, triggerReason }: Pricing
 
     if (!isOpen) return null;
 
-    const handleUpgrade = () => {
+    const handleUpgrade = async () => {
         setIsLoading(true);
-        // Simulate payment processing
-        setTimeout(() => {
-            upgradeToPro();
+        try {
+            const response = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await response.json();
+            if (data.sessionId) {
+                // Determine env - using global loadStripe pattern is safer but basic redirect works too
+                // Or use stripe-js
+                const { loadStripe } = await import('@stripe/stripe-js');
+                const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+                if (stripe) {
+                    await stripe.redirectToCheckout({ sessionId: data.sessionId });
+                }
+            } else {
+                console.error("No Session ID returned");
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error("Stripe Checkout Error", error);
             setIsLoading(false);
-            onClose();
-        }, 2000);
+        }
     };
 
     return (
@@ -73,20 +89,21 @@ export default function PricingModal({ isOpen, onClose, triggerReason }: Pricing
 
                     {/* Features List */}
                     <div className="space-y-4 mb-8">
-                        <FeatureRow text="Unlimited Depth & Structure Scans" isPro />
-                        <FeatureRow text="Reef & Benthic Habitat Maps" isPro />
-                        <FeatureRow text="7-Day AI Fishing Forecasts" isPro />
-                        <FeatureRow text="Save Unlimited Fishing Spots" isPro />
-                        <FeatureRow text="Nautical Charts Overlay" />
+                        <FeatureRow text="Unlimited Saved Spots" isPro />
+                        <FeatureRow text="Detailed Structure Scans" isPro />
+                        <FeatureRow text="High-Res Reef & Bathymetry Maps" isPro />
+                        <FeatureRow text="Smart Notifications & Alerts" isPro />
+                        <FeatureRow text="Tides, Currents & Offline Cache" isPro />
                     </div>
 
                     {/* Price */}
                     <div className="text-center mb-8">
                         <div className="flex items-baseline justify-center gap-1">
-                            <span className="text-4xl font-bold text-white">$9.99</span>
+                            <span className="text-4xl font-bold text-white">$4.99</span>
                             <span className="text-white/50">/ month</span>
                         </div>
-                        <p className="text-xs text-emerald-400 mt-2 font-medium">✨ 7-Day Free Trial Included</p>
+                        <p className="text-xs text-white/40 mt-1">or $39/year (~$3.25/mo)</p>
+                        <p className="text-xs text-emerald-400 mt-2 font-medium">✨ Cancel Anytime</p>
                     </div>
 
                     {/* Action */}
@@ -111,7 +128,7 @@ export default function PricingModal({ isOpen, onClose, triggerReason }: Pricing
                     >
                         {isLoading ? <Loader2 className="animate-spin" /> : (
                             <>
-                                Start Free Trial <Sparkles size={18} />
+                                Go Pro Now <Sparkles size={18} />
                             </>
                         )}
                     </button>

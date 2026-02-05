@@ -12,6 +12,7 @@ import { ScoutService, ScoutSpot } from '@/services/ScoutService';
 interface DecisionCardProps {
     initialLat: number;
     initialLng: number;
+    userLocation?: [number, number] | null;
     onStructureFound?: (locations: Array<{ lat: number; lng: number }>) => void;
     onScoutFound?: (spots: ScoutSpot[]) => void;
     onOpenPricing?: (reason: string) => void;
@@ -21,6 +22,7 @@ interface DecisionCardProps {
 export default function DecisionCard({
     initialLat,
     initialLng,
+    userLocation,
     onStructureFound,
     onScoutFound,
     onOpenPricing,
@@ -43,6 +45,32 @@ export default function DecisionCard({
     const result = useMemo(() => {
         return calculateFishability(initialLat, initialLng, species);
     }, [initialLat, initialLng, species]);
+
+    // ETA State
+    const [speed, setSpeed] = useState(25); // Default 25 knots
+
+    // Haversine Distance Calculation (Nautical Miles)
+    const travelData = useMemo(() => {
+        if (!userLocation) return null;
+
+        const R = 3440.065; // Earth radius in NM
+        const dLat = (initialLat - userLocation[0]) * Math.PI / 180;
+        const dLon = (initialLng - userLocation[1]) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(userLocation[0] * Math.PI / 180) * Math.cos(initialLat * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distanceNM = R * c;
+
+        const timeHours = distanceNM / Math.max(1, speed);
+        const timeMins = Math.round(timeHours * 60);
+
+        return {
+            distance: distanceNM.toFixed(1),
+            time: timeMins < 60 ? `${timeMins} min` : `${Math.floor(timeMins / 60)}h ${timeMins % 60}m`
+        };
+    }, [userLocation, initialLat, initialLng, speed]);
 
     // Derived state for depth loading (reset on coords change)
     useEffect(() => {
@@ -693,6 +721,38 @@ export default function DecisionCard({
                             <span className="font-bold text-sm text-white">
                                 {Math.round(weather.temp)}° <span className="text-slate-500">/</span> {weather.waterTemp ? Math.round(weather.waterTemp) : '--'}°
                             </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Travel Time / ETA */}
+            {travelData && (
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                            <Navigation size={14} />
+                            ETA ({speed} kts)
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-lg font-bold text-white">{travelData.time}</span>
+                            <span className="text-xs text-slate-400">({travelData.distance} NM)</span>
+                        </div>
+                    </div>
+
+                    {/* Speed Adjust */}
+                    <div className="flex flex-col items-end gap-1">
+                        <label className="text-[10px] text-muted uppercase">Boat Speed</label>
+                        <div className="flex items-center gap-2 bg-slate-800 rounded px-2 py-1 border border-slate-700">
+                            <button
+                                onClick={() => setSpeed(Math.max(5, speed - 5))}
+                                className="text-white hover:text-emerald-400 px-1 font-bold"
+                            >-</button>
+                            <span className="text-sm font-mono w-4 text-center text-white">{speed}</span>
+                            <button
+                                onClick={() => setSpeed(Math.min(60, speed + 5))}
+                                className="text-white hover:text-emerald-400 px-1 font-bold"
+                            >+</button>
                         </div>
                     </div>
                 </div>

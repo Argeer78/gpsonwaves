@@ -19,7 +19,7 @@ import { useUser } from '@/context/UserContext';
 import SaveSpotModal from '@/components/SaveSpotModal';
 import Speedometer from '@/components/Speedometer';
 import { ScoutService, ScoutSpot } from '@/services/ScoutService';
-import { saveSpot } from '@/utils/Storage';
+import { saveSpot, getSavedSpots } from '@/utils/Storage';
 import { Species } from '@/utils/FishabilityEngine';
 
 export default function Home() {
@@ -67,6 +67,15 @@ export default function Home() {
 
   const handleSaveSpot = (data: { name: string; tags: string[]; notes: string; weather?: any }) => {
     if (!saveModalData) return;
+
+    // Limit Check for Free Users
+    const currentSpots = getSavedSpots();
+    if (!user?.isPro && currentSpots.length >= 5) {
+      setSaveModalData(null);
+      setPricingReason("Free Limit Reached (Max 5 Spots). Upgrade for Unlimited!");
+      setShowPricing(true);
+      return;
+    }
 
     saveSpot({
       name: data.name,
@@ -230,6 +239,7 @@ export default function Home() {
       <DecisionCard
         initialLat={selectedLocation[0]}
         initialLng={selectedLocation[1]}
+        userLocation={userLocation}
         onStructureFound={(locs) => setStructures(locs)}
         onScoutFound={(spots) => setScoutSpots(spots)}
         onOpenPricing={(reason) => {

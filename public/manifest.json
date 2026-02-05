@@ -1,16 +1,71 @@
 {
-  "name": "GPSonWaves",
+  "name": "GPSonWaves: Fishing Forecast & Maps",
   "short_name": "GPSonWaves",
-  "description": "Is this spot worth fishing right now?",
-  "start_url": "/",
+  "description": "Know if a spot is worth fishing right now. High-res maps, marine conditions, and AI forecasts.",
+  "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Map View"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile Fishability Score"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "My Saved Spots",
+      "short_name": "Spots",
+      "description": "View your saved fishing spots",
+      "url": "/?view=saved",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Pricing & Pro",
+      "short_name": "Pro",
+      "description": "Upgrade to Pro",
+      "url": "/?view=pricing",
+      "icons": [
+        {
+          "src": "/icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "navigation",
+    "sports",
+    "weather"
   ]
 }

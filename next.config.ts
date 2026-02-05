@@ -1,7 +1,20 @@
+import withPWA from "@ducanh2912/next-pwa";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Your existing config
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: false, // Enable in dev for testing
+  // cacheOnFrontEndNav: true,
+  // aggressiveFrontEndNavCaching: true,
+  // reloadOnOnline: true,
+  // swcMinify: true, // Next 13+ does this by default
+  workboxOptions: {
+    disableDevLogs: true,
+  },
+})(nextConfig);

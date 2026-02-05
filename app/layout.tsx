@@ -5,6 +5,12 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "GPSonWaves",
   description: "Is this spot worth fishing right now?",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "GPSonWaves",
+  },
 };
 
 export const viewport: Viewport = {
@@ -12,10 +18,12 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#0f172a",
 };
 
 import { UserProvider } from "@/context/UserContext";
 import { SensorProvider } from "@/context/SensorContext";
+import InstallPrompt from "@/components/InstallPrompt";
 
 // ...
 
@@ -32,6 +40,7 @@ export default function RootLayout({
             {children}
           </SensorProvider>
         </UserProvider>
+        <InstallPrompt />
       </body>
     </html>
   );

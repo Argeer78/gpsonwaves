@@ -37,7 +37,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         <div style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 100,
+            zIndex: 99999,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
