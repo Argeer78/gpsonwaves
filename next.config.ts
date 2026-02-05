@@ -8,7 +8,8 @@ const nextConfig: NextConfig = {
 export default withPWA({
   dest: "public",
   register: true,
-  skipWaiting: true,
+  register: true,
+  // skipWaiting: true, // Removed as it caused type error in newer version
   disable: false, // Enable in dev for testing
   // cacheOnFrontEndNav: true,
   // aggressiveFrontEndNavCaching: true,
