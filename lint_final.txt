@@ -1,0 +1,301 @@
+﻿
+> gpsonwaves@0.1.0 lint
+> eslint
+
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\admin\page.tsx
+  20:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\admin\page.tsx:20:17
+  18 |                 router.push('/');
+  19 |             } else if (!isAuthorized) {
+> 20 |                 setIsAuthorized(true);
+     |                 ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  21 |             }
+  22 |         }
+  23 |     }, [user, isLoading, router, isAuthorized]);  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\api\depth\route.ts
+   31:13  error  'queryParam' is never reassigned. Use 'const' instead  prefer-const
+   71:56  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   77:42  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+   77:50  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  107:21  error  Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\cookies\page.tsx
+  21:80   error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                        react/no-unescaped-entities
+  21:110  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                        react/no-unescaped-entities
+  21:122  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                        react/no-unescaped-entities
+  26:21   error  Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/link` instead. See: https://nextjs.org/docs/messages/no-html-link-for-pages  @next/next/no-html-link-for-pages
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\page.tsx
+   21:10  warning  'ScoutService' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+   23:10  warning  'Species' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+   27:17  warning  'isLoading' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   44:20  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\page.tsx:44:20
+  42 |
+  43 |   useEffect(() => {
+> 44 |     if (!isClient) setIsClient(true);
+     |                    ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  45 |     if ('geolocation' in navigator) {
+  46 |       // Use watchPosition for continuous boat tracking
+  47 |       const id = navigator.geolocation.watchPosition(  react-hooks/set-state-in-effect
+   58:10  warning  'err' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   66:6   warning  React Hook useEffect has a missing dependency: 'isClient'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/exhaustive-deps
+   68:90  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  113:9   warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @next/next/no-img-element
+
+C:\Users\a_sg1\Documents\gpsonwaves\app\privacy\page.tsx
+  31:30  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  31:42  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\ConsentBanner.tsx
+  12:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\ConsentBanner.tsx:12:13
+  10 |         const consent = localStorage.getItem('gpsonwaves-consent');
+  11 |         if (!consent) {
+> 12 |             setIsVisible(true);
+     |             ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  13 |         }
+  14 |     }, []);
+  15 |  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\DecisionCard.tsx
+   4:73  warning  'Wind' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   4:79  warning  'Anchor' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   4:87  warning  'Search' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   5:41  warning  'FishabilityResult' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  36:12  warning  'isScanning' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  36:24  warning  'setIsScanning' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  47:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\DecisionCard.tsx:47:9
+  45 |     // Reset loading on location change
+  46 |     useEffect(() => {
+> 47 |         setLoadingDepth(true);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |         setStructureAlert(false);
+  49 |
+  50 |         getWaterDepth(initialLat, initialLng).then(d => {  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\MapBackground.tsx
+  10:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\MapComponent.tsx
+    8:18  warning  'getSimulatedTraffic' is defined but never used                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+    9:25  warning  'Ship' is defined but never used                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  251:8   warning  React Hook useEffect has missing dependencies: 'onStatusChange' and 'onUpdate'. Either include them or remove the dependency array. If 'onUpdate' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+  287:8   warning  React Hook useEffect has a missing dependency: 'onDebugUpdate'. Either include it or remove the dependency array. If 'onDebugUpdate' changes too often, find the parent component that defines it and wrap that definition in useCallback               react-hooks/exhaustive-deps
+  301:11  warning  'map' is assigned a value but never used                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+  652:41  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                         react/no-unescaped-entities
+  652:55  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                         react/no-unescaped-entities
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\NewDecisionCard.tsx
+   4:73  warning  'Wind' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   4:79  warning  'Anchor' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   4:87  warning  'Search' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   5:41  warning  'FishabilityResult' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  36:12  warning  'isScanning' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+  36:24  warning  'setIsScanning' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  47:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\NewDecisionCard.tsx:47:9
+  45 |     // Derived state for depth loading (reset on coords change)
+  46 |     useEffect(() => {
+> 47 |         setLoadingDepth(true);
+     |         ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |         // ... (rest of logic in subsequent code)
+  49 |         setStructureAlert(false);
+  50 |  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\PricingModal.tsx
+  120:37  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SaveSpotModal.tsx
+   4:60  warning  'MapPin' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   5:10  warning  'Species' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  32:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SaveSpotModal.tsx:32:13
+  30 |         if (isOpen && initialData) {
+  31 |             // Reset fields
+> 32 |             setName(`Spot ${new Date().toLocaleDateString()}`);
+     |             ^^^^^^^ Avoid calling setState() directly within an effect
+  33 |             setTags('');
+  34 |             setNotes('');
+  35 |  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SavedSpotsDrawer.tsx
+    4:29   warning  'Navigation' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   18:13   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SavedSpotsDrawer.tsx:18:13
+  16 |     useEffect(() => {
+  17 |         if (isOpen) {
+> 18 |             setSpots(getSavedSpots());
+     |             ^^^^^^^^ Avoid calling setState() directly within an effect
+  19 |         }
+  20 |     }, [isOpen]);
+  21 |  react-hooks/set-state-in-effect
+   58:68   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+   58:73   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+  124:45   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+  124:121  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SensorSettingsModal.tsx
+   3:42  warning  'Save' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-unused-vars
+  13:39  warning  'battery' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  21:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SensorSettingsModal.tsx:21:9
+  19 |
+  20 |     useEffect(() => {
+> 21 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  22 |         return () => setMounted(false);
+  23 |     }, []);
+  24 |  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SiteFooter.tsx
+  10:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\SiteFooter.tsx:10:9
+   8 |
+   9 |     useEffect(() => {
+> 10 |         setMounted(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  11 |         const consent = localStorage.getItem('gpsonwaves-consent');
+  12 |         if (!consent) {
+  13 |             setShowConsent(true);  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\Speedometer.tsx
+   3:20  warning  'useEffect' is defined but never used        @typescript-eslint/no-unused-vars
+   4:10  warning  'Gauge' is defined but never used            @typescript-eslint/no-unused-vars
+   4:29  warning  'Bluetooth' is defined but never used        @typescript-eslint/no-unused-vars
+   4:40  warning  'Settings' is defined but never used         @typescript-eslint/no-unused-vars
+   4:50  warning  'Wifi' is defined but never used             @typescript-eslint/no-unused-vars
+   6:10  warning  'sensorManager' is defined but never used    @typescript-eslint/no-unused-vars
+  10:47  warning  'source' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\TopNav.tsx
+  3:10  warning  'Menu' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\admin\AdminStatsCard.tsx
+  2:10  warning  'Sparkles' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\a_sg1\Documents\gpsonwaves\components\admin\AdminUserTable.tsx
+  2:40  warning  'Ban' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\a_sg1\Documents\gpsonwaves\context\UserContext.tsx
+  31:17  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\a_sg1\Documents\gpsonwaves\context\UserContext.tsx:31:17
+  29 |         if (savedUser) {
+  30 |             try {
+> 31 |                 setUser(JSON.parse(savedUser));
+     |                 ^^^^^^^ Avoid calling setState() directly within an effect
+  32 |             } catch (e) {
+  33 |                 console.error("Failed to parse user", e);
+  34 |             }  react-hooks/set-state-in-effect
+
+C:\Users\a_sg1\Documents\gpsonwaves\services\ScoutService.ts
+  121:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\a_sg1\Documents\gpsonwaves\services\SensorManager.ts
+   98:24  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   98:83  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  107:24  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  109:17  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  111:21  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  121:64  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  133:48  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  165:26  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  165:82  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  169:22  warning  'e' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  177:26  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  177:82  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  182:22  warning  'e' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  184:24  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  224:54  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  229:57  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\a_sg1\Documents\gpsonwaves\services\TrafficService.ts
+   18:10  warning  'ScoutSpot' is defined but never used                  @typescript-eslint/no-unused-vars
+  133:21  error    Unexpected any. Specify a different type               @typescript-eslint/no-explicit-any
+  142:13  error    'vesselsMap' is never reassigned. Use 'const' instead  prefer-const
+
+C:\Users\a_sg1\Documents\gpsonwaves\utils\DepthService.ts
+  100:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\a_sg1\Documents\gpsonwaves\utils\FishabilityEngine.ts
+  37:11  warning  'score' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\a_sg1\Documents\gpsonwaves\utils\Storage.ts
+  1:10  warning  'FishabilityResult' is defined but never used  @typescript-eslint/no-unused-vars
+
+έεΨ 91 problems (48 errors, 43 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

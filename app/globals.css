@@ -1,27 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* HSL Colors */
+  --slate-900: 222 47% 11%;
+  --slate-800: 215 28% 17%;
+  --emerald-400: 158 64% 52%;
+  --rose-500: 343 100% 50%;
+  --amber-400: 48 96% 53%;
+  --white: 0 0% 100%;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+  /* Semantic Colors */
+  --color-bg: hsl(var(--slate-900));
+  --color-card-bg: hsla(215, 28%, 17%, 0.7);
+  --color-text-main: hsl(var(--white));
+  --color-text-muted: hsla(0, 0%, 100%, 0.7);
+  --color-accent-good: hsl(var(--emerald-400));
+  --color-accent-bad: hsl(var(--rose-500));
+  --color-accent-warn: hsl(var(--amber-400));
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* Z-Index */
+  --z-map: 0;
+  --z-overlay: 10;
+  --z-modal: 100;
+  --z-max: 9999;
 }
 
 * {
@@ -30,13 +35,336 @@ body {
   margin: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+body {
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+h1,
+h2,
+h3,
+h4 {
+  font-family: 'Outfit', sans-serif;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  background: none;
+}
+
+/* --- Utility Classes (Replacement for Tailwind) --- */
+
+.full-screen {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.relative {
+  position: relative;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.text-6xl {
+  font-size: 3.75rem;
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-white {
+  color: var(--color-text-main);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-emerald {
+  color: var(--color-accent-good);
+}
+
+.text-rose {
+  color: var(--color-accent-bad);
+}
+
+/* --- Components --- */
+
+/* Map */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-map);
+  background: var(--color-bg);
+}
+
+/* Glass Panel (Shared) */
+.glass-panel {
+  background: var(--color-card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+/* Dashboard Overlay */
+.dashboard-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+/* Decision Card */
+.decision-card {
+  pointer-events: auto;
+  max-width: 400px;
+  margin: 5rem auto 0;
+  /* center horizontally, top margin */
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  /* Contain absolute toggle button */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.decision-card.docked {
+  margin: 0;
+  position: absolute;
+  top: 6rem;
+  left: 1rem;
+  bottom: 1rem;
+  /* Stretch to bottom */
+  max-width: 260px;
+  /* Thinner */
+  padding: 1rem;
+  gap: 1rem;
+  justify-content: flex-start;
+  /* Align contents to top */
+  overflow-y: auto;
+  /* Allow scrolling if content is long */
+  z-index: 20;
+  /* Ensure above map but below header/modals */
+}
+
+.score-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 700;
+  margin: 0 auto;
+  box-shadow: 0 0 40px currentColor;
+  /* Glow effect */
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: white;
+  color: black;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Floating Menu Button */
+.fab-menu {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: var(--z-max);
+  background-color: var(--color-accent-good);
+  color: #0f172a;
+  /* Slate 900 */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  transition: transform 0.1s;
+}
+
+.fab-menu:active {
+  transform: scale(0.90);
+}
+
+/* Logo */
+.app-logo {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  z-index: var(--z-max);
+  font-weight: 700;
+  font-size: 1.25rem;
+  pointer-events: none;
+  /* Let clicks pass through */
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Drawer */
+.drawer-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: var(--z-modal);
+}
+
+.drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 85%;
+  max-width: 320px;
+  height: 100%;
+  background: var(--color-bg);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: calc(var(--z-modal) + 1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Custom Tooltips */
+.glass-tooltip {
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #34d399 !important;
+  /* Emerald-400 */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border-radius: 4px;
+}
+
+.scout-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-weight: bold;
+  color: white !important;
+  text-shadow: 0 2px 4px black;
+  font-size: 10px;
 }
