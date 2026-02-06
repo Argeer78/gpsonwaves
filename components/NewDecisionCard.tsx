@@ -514,16 +514,32 @@ export default function DecisionCard({
                         </div>
                     </div>
                 )}
+                {/* End Scrollable Content */}
+            </div>
 
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${initialLat},${initialLng}`, '_blank');
-                        }}
-                    >
-                <Navigation size={18} />
-                Go
-            </button>
-        </div>
+            {/* Action Buttons (Footer) */}
+            <div className="flex gap-2 shrink-0 mt-3">
+                <button
+                    onClick={onSave}
+                    className="btn-secondary"
+                    style={{ flex: 1 }}
+                >
+                    <Bookmark size={18} />
+                    Save Spot
+                </button>
+                <button
+                    className="btn-primary"
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${initialLat},${initialLng}`, '_blank');
+                    }}
+                >
+                    <Navigation size={18} />
+                    Go
+                </button>
+            </div>
 
-            </div >
+        </div >
 
         </div >
     );
