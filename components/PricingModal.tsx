@@ -8,37 +8,73 @@ interface PricingModalProps {
     isOpen: boolean;
     onClose: () => void;
     triggerReason?: string; // e.g. "To view Reef Maps, you need Pro"
+    onLoginRequired?: () => void;
 }
 
-export default function PricingModal({ isOpen, onClose, triggerReason }: PricingModalProps) {
-    const { upgradeToPro } = useUser();
+export default function PricingModal({ isOpen, onClose, triggerReason, onLoginRequired }: PricingModalProps) {
+    const { user, upgradeToPro } = useUser();
     const [isLoading, setIsLoading] = useState(false);
 
     if (!isOpen) return null;
 
     const handleUpgrade = async () => {
+        // Auth Guard
+        if (!user) {
+            if (onLoginRequired) onLoginRequired();
+            return;
+        }
+
         setIsLoading(true);
         try {
             const response = await fetch('/api/stripe/checkout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                // Pass user email to link customer in Stripe
+                body: JSON.stringify({ email: user.email })
             });
-            const data = await response.json();
-            if (data.sessionId) {
-                // Determine env - using global loadStripe pattern is safer but basic redirect works too
-                // Or use stripe-js
-                const { loadStripe } = await import('@stripe/stripe-js');
-                const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
-                if (stripe) {
-                    // @ts-ignore - Typescript definition verification issue
-                    await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
+
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                const data = await response.json();
+
+                // Preferred: Direct URL Redirect (Server-side session creation)
+                if (data.url) {
+                    window.location.href = data.url;
+                    return;
+                }
+
+                // Fallback: Client-side redirect (Legacy/Deprecated in some versions)
+                if (data.sessionId) {
+                    const { loadStripe } = await import('@stripe/stripe-js');
+                    const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
+                    if (stripe) {
+                        try {
+                            // @ts-ignore
+                            const result = await (stripe as any).redirectToCheckout({ sessionId: data.sessionId });
+                            if (result.error) {
+                                alert(result.error.message);
+                                setIsLoading(false);
+                            }
+                        } catch (e) {
+                            console.error("Stripe Redirect Error", e);
+                            alert("Payment redirection failed. Please try again.");
+                            setIsLoading(false);
+                        }
+                    }
+                } else {
+                    console.error("No Session URL or ID returned", data);
+                    alert("Payment initiation failed. Please try again.");
+                    setIsLoading(false);
                 }
             } else {
-                console.error("No Session ID returned");
+                const text = await response.text();
+                console.error("Non-JSON Response from Stripe API:", text);
+                alert("Server Error: API returned unexpected response. Check console.");
                 setIsLoading(false);
             }
         } catch (error) {
             console.error("Stripe Checkout Error", error);
+            alert("Application Error: " + (error as any).message);
             setIsLoading(false);
         }
     };

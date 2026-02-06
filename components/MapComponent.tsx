@@ -89,7 +89,9 @@ interface MapComponentProps {
     structures?: Array<{ lat: number, lng: number }>;
     scoutSpots?: ScoutSpot[];
     isPro?: boolean;
+    isAuthenticated?: boolean;
     onShowPricing?: (reason: string) => void;
+    onShowAuth?: () => void;
 }
 
 // Custom Icon for Scout Spots
@@ -200,22 +202,73 @@ function MapInteractions({
 
 
 // Guard Component for Pro Layers
-function LayerGuard({ isPro, onShowPricing }: { isPro: boolean, onShowPricing?: (reason: string) => void }) {
+function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth }: {
+    isPro: boolean,
+    isAuthenticated: boolean,
+    onShowPricing?: (reason: string) => void,
+    onShowAuth?: () => void
+}) {
     const map = useMapEvents({
         overlayadd: (e) => {
-            if (e.name.includes("Reef Maps") && !isPro) {
-                // Remove immediately
-                setTimeout(() => {
-                    e.target.removeLayer(e.layer);
-                    if (onShowPricing) onShowPricing("Reef Maps (Pro Feature)");
-                }, 10);
+            // Define restricted layers
+            const restrictedLayers = ["Reef Maps", "Seabed", "NOAA", "Nautical Charts"];
+            const isRestricted = restrictedLayers.some(l => e.name.includes(l));
+
+            if (isRestricted) {
+                // Guest Logic
+                if (!isAuthenticated) {
+                    setTimeout(() => {
+                        e.target.removeLayer(e.layer);
+                        if (onShowAuth) onShowAuth();
+                    }, 10);
+                    return;
+                }
+
+                // Free User Logic
+                if (!isPro) {
+                    setTimeout(() => {
+                        e.target.removeLayer(e.layer);
+                        if (onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
+                    }, 10);
+                }
+            }
+        },
+        baselayerchange: (e) => {
+            // Treat specific base layers as premium if users requested "all maps" restriction
+            // E.g. Seabed Global is a BaseLayer
+            const restrictedBaseLayers = ["Seabed", "NOAA"];
+            const isRestricted = restrictedBaseLayers.some(l => e.name.includes(l));
+
+            if (isRestricted) {
+                if (!isAuthenticated) {
+                    setTimeout(() => {
+                        // Revert to Satellite (safe default) or Dark
+                        // Use a global event or context?
+                        // For now just removing isn't possible for BaseLayer, we must switch back.
+                        // Actually Leaflet logic is tricky here. 
+                        // Simplest: Show alert/modal. The layer visually changes though.
+                        if (onShowAuth) onShowAuth();
+                        // Ideally we switch back to 'Satellite' programmatically, 
+                        // but access to LayersControl state is hard.
+                        // We will just show the popup. The user will see the map but be interrupted.
+                        // Or we can try map.removeLayer(e.layer) which might show gray.
+                        // Let's rely on the interruption.
+                    }, 10);
+                    return;
+                }
+
+                if (!isPro) {
+                    setTimeout(() => {
+                        if (onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
+                    }, 10);
+                }
             }
         }
     });
     return null;
 }
 
-export default function MapComponent({ center, onLocationSelect, userLocation, structures = [], scoutSpots = [], isPro = false, onShowPricing }: MapComponentProps) {
+export default function MapComponent({ center, onLocationSelect, userLocation, structures = [], scoutSpots = [], isPro = false, isAuthenticated = false, onShowPricing, onShowAuth }: MapComponentProps) {
     // Measurement State
     const [isMeasuring, setIsMeasuring] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<L.LatLng[]>([]);
@@ -332,7 +385,12 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                 <MapController center={center} />
 
                 {/* Layer Guard for Pro Features */}
-                <LayerGuard isPro={isPro} onShowPricing={onShowPricing} />
+                <LayerGuard
+                    isPro={isPro}
+                    isAuthenticated={isAuthenticated}
+                    onShowPricing={onShowPricing}
+                    onShowAuth={onShowAuth}
+                />
 
 
 

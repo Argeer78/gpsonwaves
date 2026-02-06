@@ -1,6 +1,6 @@
 'use client'; // HMR Trigger
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Menu, UserCircle, Crown, LogOut, Shield } from 'lucide-react';
@@ -14,6 +14,7 @@ import DecisionCard from '@/components/NewDecisionCard';
 import SavedSpotsDrawer from '@/components/SavedSpotsDrawer';
 import SiteFooter from '@/components/SiteFooter';
 import AuthModal from '@/components/AuthModal';
+import ProfileModal from '@/components/ProfileModal';
 import PricingModal from '@/components/PricingModal';
 import { useUser } from '@/context/UserContext';
 import SaveSpotModal from '@/components/SaveSpotModal';
@@ -34,11 +35,15 @@ export default function Home() {
 
   // Modals
   const [showAuth, setShowAuth] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [pricingReason, setPricingReason] = useState("");
 
   // Save Modal State
   const [saveModalData, setSaveModalData] = useState<{ lat: number, lng: number, score: number, depth?: number } | null>(null);
+
+  // Track if we've auto-centered map yet
+  const hasCenteredRef = useRef(false);
 
   useEffect(() => {
     if (!isClient) setIsClient(true);
@@ -49,11 +54,11 @@ export default function Home() {
           const newPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
           setUserLocation(newPos);
 
-          // Initial center only
-          // If we want the map to start at user loc, we can set selectedLocation once?
-          // Or just let user explore. 
-          // Let's set selectedLocation ONLY if it hasn't been moved yet? 
-          // Actually, let's just initialize it once.
+          // Auto-Center Map on First Location Fix
+          if (!hasCenteredRef.current) {
+            setSelectedLocation(newPos);
+            hasCenteredRef.current = true;
+          }
         },
         (err) => {
           console.log("Loc unavailable, using default");
@@ -66,13 +71,20 @@ export default function Home() {
   }, []);
 
   const handleSaveSpot = (data: { name: string; tags: string[]; notes: string; weather?: any }) => {
+    // 1. Guest Check
+    if (!user) {
+      setSaveModalData(null);
+      setShowAuth(true); // Trigger Auth for guests
+      return;
+    }
+
     if (!saveModalData) return;
 
-    // Limit Check for Free Users
+    // 2. Free Limit Check (Max 2 Spots)
     const currentSpots = getSavedSpots();
-    if (!user?.isPro && currentSpots.length >= 5) {
+    if (!user.isPro && currentSpots.length >= 2) {
       setSaveModalData(null);
-      setPricingReason("Free Limit Reached (Max 5 Spots). Upgrade for Unlimited!");
+      setPricingReason("Free Limit Reached (Max 2 Spots). Upgrade for Unlimited!");
       setShowPricing(true);
       return;
     }
@@ -111,10 +123,12 @@ export default function Home() {
         structures={structures}
         scoutSpots={scoutSpots}
         isPro={!!user?.isPro}
+        isAuthenticated={!!user} // Pass Auth State
         onShowPricing={(reason) => {
           setPricingReason(reason);
           setShowPricing(true);
         }}
+        onShowAuth={() => setShowAuth(true)} // Pass Auth Trigger
       />
 
       {/* App Logo */}
@@ -134,13 +148,25 @@ export default function Home() {
         }}
       >
 
+        {/* Permanent Upgrade Button (Visual) */}
+        {(!user || !user.isPro) && (
+          <button
+            onClick={() => setShowPricing(true)}
+            className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-3 py-2 rounded-full font-bold shadow-lg hover:brightness-110 active:scale-95 transition-all"
+            style={{ fontSize: '0.85rem' }}
+          >
+            <Crown size={16} fill="currentColor" />
+            <span>UPGRADE</span>
+          </button>
+        )}
+
         {/* User Button */}
         <button
           onClick={() => {
             if (!user) setShowAuth(true);
-            else if (!user.isPro) setShowPricing(true);
+            else setShowProfile(true);
           }}
-          className="flex items-center gap-2 transition-colors"
+          className="flex items-center gap-2 transition-colors hover:bg-slate-800"
           style={{
             backgroundColor: 'rgba(15, 23, 42, 0.8)', // slate-900/80
             backdropFilter: 'blur(12px)',
@@ -153,11 +179,15 @@ export default function Home() {
         >
           {user ? (
             <>
-              <div className="rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold" style={{ width: '1.5rem', height: '1.5rem' }}>
-                {user.name.charAt(0)}
+              <div className="rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold ring-2 ring-emerald-500/30" style={{ width: '1.5rem', height: '1.5rem' }}>
+                {user.photoUrl ? (
+                  <img src={user.photoUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                ) : (
+                  user.name.charAt(0)
+                )}
               </div>
-              <span className="text-sm font-medium pr-1">{user.isPro ? 'PRO' : 'Free'}</span>
-              {user.isPro && <Crown size={14} className="text-amber-400" />}
+              <span className="text-sm font-medium pr-1 hidden sm:inline">{user.name.split(' ')[0]}</span>
+              {user.isPro && <Crown size={14} className="text-amber-400" fill="currentColor" />}
             </>
           ) : (
             <>
@@ -261,10 +291,15 @@ export default function Home() {
 
       {/* Modals */}
       <AuthModal isOpen={showAuth} onClose={() => setShowAuth(false)} />
+      <ProfileModal isOpen={showProfile} onClose={() => setShowProfile(false)} />
       <PricingModal
         isOpen={showPricing}
         onClose={() => { setShowPricing(false); setPricingReason(""); }}
         triggerReason={pricingReason}
+        onLoginRequired={() => {
+          setShowPricing(false);
+          setTimeout(() => setShowAuth(true), 200); // Slight delay for smooth transition
+        }}
       />
       <SaveSpotModal
         isOpen={!!saveModalData}

@@ -12,6 +12,8 @@ export async function POST(req: Request) {
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
+            // Link the Stripe Customer to the App User Email
+            customer_email: body.email,
             line_items: [
                 {
                     price_data: {
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'}/`,
         });
 
-        return NextResponse.json({ sessionId: session.id });
+        return NextResponse.json({ sessionId: session.id, url: session.url });
     } catch (err: any) {
         console.error("Stripe Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });

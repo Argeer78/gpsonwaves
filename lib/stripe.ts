@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '', {
-    apiVersion: '2026-01-28.clover' as any, // Cast to any to avoid future type mismatches if minor versions update
+    apiVersion: '2024-06-20', // Use a valid, recent API version
     typescript: true,
 });

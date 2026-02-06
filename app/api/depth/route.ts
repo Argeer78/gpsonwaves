@@ -34,34 +34,36 @@ export async function GET(request: Request) {
 
         const isSinglePoint = !locations && latStr && lngStr;
 
+        // 13 Points total: Center + Inner Box + Outer Cross
+        const lat = parseFloat(latStr!);
+        const lng = parseFloat(lngStr!);
+        const offset = 0.001;  // ~110m radius
+        const offset2 = 0.002; // ~220m radius (Outer Ring)
+
+        const samples = [
+            `${lat},${lng}`,                   // Center
+            `${lat + offset},${lng}`,          // N
+            `${lat - offset},${lng}`,          // S
+            `${lat},${lng + offset}`,          // E
+            `${lat},${lng - offset}`,          // W
+            `${lat + offset},${lng + offset}`, // NE
+            `${lat + offset},${lng - offset}`, // NW
+            `${lat - offset},${lng + offset}`, // SE
+            `${lat - offset},${lng - offset}`, // SW
+            // Outer Ring (Cardinal only) to catch deep water further out
+            `${lat + offset2},${lng}`,         // N2
+            `${lat - offset2},${lng}`,         // S2
+            `${lat},${lng + offset2}`,         // E2
+            `${lat},${lng - offset2}`          // W2
+        ].join('|');
+
         // 1. Try Mapzen (Smart Sampling for Single Point)
         try {
             if (isSinglePoint) {
                 // Smart Sampling: Check 9 points (3x3 grid) to detect "water" nearby
                 // Increased radius to ~110m (0.001 deg) to overcome expanded land masks
-                const lat = parseFloat(latStr!);
-                const lng = parseFloat(lngStr!);
-                const offset = 0.001;  // ~110m radius
-                const offset2 = 0.002; // ~220m radius (Outer Ring)
 
-                // Construct raw pipe-delimited string
-                // 13 Points total: Center + Inner Box + Outer Cross
-                const samples = [
-                    `${lat},${lng}`,                   // Center
-                    `${lat + offset},${lng}`,          // N
-                    `${lat - offset},${lng}`,          // S
-                    `${lat},${lng + offset}`,          // E
-                    `${lat},${lng - offset}`,          // W
-                    `${lat + offset},${lng + offset}`, // NE
-                    `${lat + offset},${lng - offset}`, // NW
-                    `${lat - offset},${lng + offset}`, // SE
-                    `${lat - offset},${lng - offset}`, // SW
-                    // Outer Ring (Cardinal only) to catch deep water further out
-                    `${lat + offset2},${lng}`,         // N2
-                    `${lat - offset2},${lng}`,         // S2
-                    `${lat},${lng + offset2}`,         // E2
-                    `${lat},${lng - offset2}`          // W2
-                ].join('|');
+                // Fetch with encoded locations
 
                 // Fetch with encoded locations
                 const mapzenData = await fetchDataset('mapzen', `locations=${encodeURIComponent(samples)}`, 'nearest');
@@ -96,12 +98,26 @@ export async function GET(request: Request) {
             console.warn("Mapzen API failed, falling back to GEBCO.", e);
         }
 
-        // 2. Fallback to Global (GEBCO 2020) - Simple Center
+        // 2. Fallback to Global (GEBCO 2020) - Now with Smart Sampling!
+        // We reuse the 'samples' or 'queryParam' logic to ensure we check surrounding pixels
         const fallbackParams = isSinglePoint
-            ? `locations=${encodeURIComponent(`${latStr},${lngStr}`)}`
+            ? `locations=${encodeURIComponent(samples)}` // Use the SAME 13-point sample grid as Mapzen
             : queryParam;
 
         const gebcoData = await fetchDataset('gebco2020', fallbackParams);
+
+        // If we used smart sampling (isSinglePoint), we need to filter for water again
+        if (isSinglePoint && gebcoData.results) {
+            const waterPoints = gebcoData.results.filter((r: any) => r.elevation !== null && r.elevation < 0);
+            if (waterPoints.length > 0) {
+                waterPoints.sort((a: any, b: any) => a.elevation - b.elevation);
+                return NextResponse.json({
+                    results: [waterPoints[0]],
+                    source: 'gebco-smart-13'
+                });
+            }
+        }
+
         return NextResponse.json({ ...gebcoData, source: 'gebco2020' });
 
     } catch (error: any) {

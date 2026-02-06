@@ -7,6 +7,17 @@ type User = {
     email: string;
     isPro: boolean;
     isAdmin?: boolean;
+    photoUrl?: string;
+    boatSettings?: {
+        name: string;
+        draft: number; // meters
+        length: number; // meters
+        type: string;
+    };
+    preferences?: {
+        units: 'metric' | 'imperial';
+        theme: 'dark' | 'light';
+    };
 };
 
 type UserContextType = {
@@ -15,6 +26,7 @@ type UserContextType = {
     login: (name: string, email: string) => void;
     logout: () => void;
     upgradeToPro: () => void;
+    updateUser: (updates: Partial<User>) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -39,11 +51,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const login = (name: string, email: string) => {
         // Simulate API call
         const isAdmin = email.toLowerCase() === 'sgouros2305@gmail.com';
-        const newUser = {
+        const newUser: User = {
             name,
             email,
             isPro: isAdmin, // Admins get Pro for free
-            isAdmin
+            isAdmin,
+            preferences: {
+                units: 'metric',
+                theme: 'dark'
+            }
         };
         setUser(newUser);
         localStorage.setItem('gpsonwaves-user', JSON.stringify(newUser));
@@ -62,8 +78,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const updateUser = (updates: Partial<User>) => {
+        if (user) {
+            const updatedUser = { ...user, ...updates };
+            setUser(updatedUser);
+            localStorage.setItem('gpsonwaves-user', JSON.stringify(updatedUser)); // Persist
+        }
+    };
+
     return (
-        <UserContext.Provider value={{ user, isLoading, login, logout, upgradeToPro }}>
+        <UserContext.Provider value={{ user, isLoading, login, logout, upgradeToPro, updateUser }}>
             {children}
         </UserContext.Provider>
     );

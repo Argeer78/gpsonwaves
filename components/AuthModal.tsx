@@ -11,7 +11,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const { login } = useUser();
-    const [mode, setMode] = useState<'login' | 'signup'>('login');
+    const [mode, setMode] = useState<'login' | 'signup' | 'verify'>('login');
     const [isLoading, setIsLoading] = useState(false);
 
     // Form State
@@ -25,7 +25,27 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         e.preventDefault();
         setIsLoading(true);
 
-        // Simulate Network Delay
+        if (mode === 'signup') {
+            // First step: Trigger Email (Simulation)
+            setTimeout(() => {
+                setMode('verify');
+                setIsLoading(false);
+            }, 1000);
+            return;
+        }
+
+        if (mode === 'verify') {
+            // Second step: Verify Code
+            setTimeout(() => {
+                // In a real app, verify code here.
+                login(name || email.split('@')[0], email);
+                setIsLoading(false);
+                onClose();
+            }, 1000);
+            return;
+        }
+
+        // Login Mode
         setTimeout(() => {
             login(name || email.split('@')[0], email);
             setIsLoading(false);
@@ -74,8 +94,41 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+
+                    {mode === 'verify' && (
+                        <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg mb-4 text-center">
+                                <p className="text-emerald-400 text-sm font-bold mb-1">Check your email!</p>
+                                <p className="text-white/60 text-xs">We sent a verification code to {email}</p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Verification Code</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="123456"
+                                        className="text-center tracking-[0.5em] font-mono text-xl"
+                                        maxLength={6}
+                                        style={{
+                                            width: '100%',
+                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '0.5rem',
+                                            padding: '0.75rem',
+                                            color: 'white',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-center text-xs text-white/40 mt-2">
+                                (For testing, enter any code)
+                            </p>
+                        </div>
+                    )}
 
                     {mode === 'signup' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -102,51 +155,55 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                         </div>
                     )}
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Email Address</label>
-                        <div style={{ position: 'relative' }}>
-                            <Mail size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '0.5rem',
-                                    padding: '0.625rem 1rem 0.625rem 2.5rem',
-                                    color: 'white',
-                                    outline: 'none'
-                                }}
-                            />
-                        </div>
-                    </div>
+                    {mode !== 'verify' && (
+                        <>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Email Address</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Mail size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                                    <input
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="you@example.com"
+                                        style={{
+                                            width: '100%',
+                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '0.5rem',
+                                            padding: '0.625rem 1rem 0.625rem 2.5rem',
+                                            color: 'white',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Password</label>
-                        <div style={{ position: 'relative' }}>
-                            <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                            <input
-                                type="password"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                style={{
-                                    width: '100%',
-                                    backgroundColor: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    borderRadius: '0.5rem',
-                                    padding: '0.625rem 1rem 0.625rem 2.5rem',
-                                    color: 'white',
-                                    outline: 'none'
-                                }}
-                            />
-                        </div>
-                    </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Password</label>
+                                <div style={{ position: 'relative' }}>
+                                    <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                                    <input
+                                        type="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        style={{
+                                            width: '100%',
+                                            backgroundColor: 'rgba(255,255,255,0.05)',
+                                            border: '1px solid rgba(255,255,255,0.1)',
+                                            borderRadius: '0.5rem',
+                                            padding: '0.625rem 1rem 0.625rem 2.5rem',
+                                            color: 'white',
+                                            outline: 'none'
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <button
                         type="submit"
@@ -167,7 +224,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             cursor: 'pointer'
                         }}
                     >
-                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : 'Sign Up')}
+                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : mode === 'signup' ? 'Create Account' : 'Verify & Login')}
                     </button>
 
                 </form>
