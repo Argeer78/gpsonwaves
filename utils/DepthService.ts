@@ -46,8 +46,8 @@ export async function getWaterDepth(lat: number, lng: number): Promise<DepthResu
 
         if (typeof elevation !== 'number') return null;
 
-        // Elevation > 0 is land. Elevation < 0 is depth.
-        if (elevation >= 0) {
+        // Elevation > 1 is land. Elevation <= 1 is treated as water (tides/noise).
+        if (elevation > 1) {
             return { meters: 0, feet: 0, isLand: true, source: data.source };
         }
 

@@ -39,6 +39,7 @@ export async function GET(request: Request) {
         const lng = parseFloat(lngStr!);
         const offset = 0.001;  // ~110m radius
         const offset2 = 0.002; // ~220m radius (Outer Ring)
+        const offset3 = 0.005; // ~550m radius (Far Outer Ring - fallback for bad pixels)
 
         const samples = [
             `${lat},${lng}`,                   // Center
@@ -50,27 +51,27 @@ export async function GET(request: Request) {
             `${lat + offset},${lng - offset}`, // NW
             `${lat - offset},${lng + offset}`, // SE
             `${lat - offset},${lng - offset}`, // SW
-            // Outer Ring (Cardinal only) to catch deep water further out
+            // Outer Ring (Cardinal only)
             `${lat + offset2},${lng}`,         // N2
             `${lat - offset2},${lng}`,         // S2
             `${lat},${lng + offset2}`,         // E2
-            `${lat},${lng - offset2}`          // W2
+            `${lat},${lng - offset2}`,         // W2
+            // Far Ring (Desperation check)
+            `${lat + offset3},${lng}`,         // N3
+            `${lat - offset3},${lng}`,         // S3
+            `${lat},${lng + offset3}`,         // E3
+            `${lat},${lng - offset3}`          // W3
         ].join('|');
 
         // 1. Try Mapzen (Smart Sampling for Single Point)
         try {
             if (isSinglePoint) {
-                // Smart Sampling: Check 9 points (3x3 grid) to detect "water" nearby
-                // Increased radius to ~110m (0.001 deg) to overcome expanded land masks
-
-                // Fetch with encoded locations
-
-                // Fetch with encoded locations
+                // Smart Sampling: Check points to detect "water" nearby
                 const mapzenData = await fetchDataset('mapzen', `locations=${encodeURIComponent(samples)}`, 'nearest');
                 const results = mapzenData.results || [];
 
-                // Filter for Water (elevation < 0)
-                const waterPoints = results.filter((r: any) => r.elevation !== null && r.elevation < 0);
+                // Filter for Water: Relaxed threshold (<= 1m elevation is "water enough")
+                const waterPoints = results.filter((r: any) => r.elevation !== null && r.elevation <= 1);
 
                 let bestPoint;
                 if (waterPoints.length > 0) {
@@ -108,7 +109,7 @@ export async function GET(request: Request) {
 
         // If we used smart sampling (isSinglePoint), we need to filter for water again
         if (isSinglePoint && gebcoData.results) {
-            const waterPoints = gebcoData.results.filter((r: any) => r.elevation !== null && r.elevation < 0);
+            const waterPoints = gebcoData.results.filter((r: any) => r.elevation !== null && r.elevation <= 1);
             if (waterPoints.length > 0) {
                 waterPoints.sort((a: any, b: any) => a.elevation - b.elevation);
                 return NextResponse.json({
