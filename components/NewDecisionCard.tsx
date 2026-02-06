@@ -515,30 +515,16 @@ export default function DecisionCard({
                     </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                    <button
-                        onClick={onSave}
-                        className="btn-secondary"
-                        style={{ flex: 1 }}
-                    >
-                        <Bookmark size={18} />
-                        Save Spot
-                    </button>
-                    <button
-                        className="btn-primary"
-                        style={{ flex: 1 }}
-                        onClick={() => {
-                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${initialLat},${initialLng}`, '_blank');
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${initialLat},${initialLng}`, '_blank');
                         }}
                     >
-                        <Navigation size={18} />
-                        Go
-                    </button>
-                </div>
-
-            </div>
-
+                <Navigation size={18} />
+                Go
+            </button>
         </div>
+
+            </div >
+
+        </div >
     );
 }
