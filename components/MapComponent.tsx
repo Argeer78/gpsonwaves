@@ -318,36 +318,40 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                 <Ruler size={20} />
             </button>
 
-            {/* Locate Me Button */}
-            {
-                userLocation && (
-                    <button
-                        onClick={() => onLocationSelect(userLocation[0], userLocation[1])}
-                        className="glass-panel"
-                        style={{
-                            position: 'absolute',
-                            bottom: '5.5rem', // Above Measure Button (2.5rem + 40px + gap)
-                            left: '0.75rem',
-                            zIndex: 400,
-                            padding: '0.6rem',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '40px',
-                            height: '40px',
-                            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-                            color: 'white',
-                            cursor: 'pointer',
-                            outline: 'none',
-                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                        }}
-                        title="Center on My Boat"
-                    >
-                        <Locate size={20} />
-                    </button>
-                )
-            }
+            {/* Locate Me Button (Always Visible) */}
+            <button
+                onClick={() => {
+                    if (userLocation) {
+                        onLocationSelect(userLocation[0], userLocation[1]);
+                    } else {
+                        // Trigger native permission request again or show toast
+                        alert("Waiting for GPS signal...");
+                    }
+                }}
+                className={`glass-panel ${!userLocation ? 'opacity-50' : ''}`}
+                style={{
+                    position: 'absolute',
+                    bottom: '5.5rem', // Above Measure Button (2.5rem + 40px + gap)
+                    left: '0.75rem',
+                    zIndex: 2000, // Boost Z-Index above everything
+                    padding: '0.6rem',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                    color: userLocation ? 'white' : '#94a3b8',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    transition: 'all 0.2s'
+                }}
+                title="Center on My Boat"
+            >
+                {userLocation ? <Locate size={20} /> : <div className="animate-pulse"><Locate size={20} /></div>}
+            </button>
 
             {
                 isMeasuring && measurePoints.length === 0 && (
