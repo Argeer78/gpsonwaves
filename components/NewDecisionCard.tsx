@@ -540,7 +540,5 @@ export default function DecisionCard({
             </div>
 
         </div >
-
-        </div >
     );
 }
