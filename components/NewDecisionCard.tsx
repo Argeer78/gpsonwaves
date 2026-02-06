@@ -234,18 +234,19 @@ export default function DecisionCard({
 
     // Default Expanded Card
     return (
-        <div className="glass-panel decision-card max-h-[85vh] md:max-h-[65vh] overflow-hidden" style={{
+        <div className="glass-panel decision-card max-h-[85dvh] md:max-h-[65vh] overflow-hidden" style={{
             pointerEvents: 'auto',
             position: 'fixed',
-            top: '5rem', // Moved up for more space
+            top: '4.5rem', // Adjusted for mobile header
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 1000,
+            zIndex: 1001, // Boost z-index
             display: 'flex',
             flexDirection: 'column',
             maxWidth: '400px',
-            width: '90%',
-            // maxHeight and overflow moved to Tailwind classes
+            width: '95%', // Slightly wider on mobile
+            overscrollBehavior: 'contain'
+            // maxHeight and overflow controlled by Tailwind
         }}
             onClick={(e) => e.stopPropagation()}
         >
