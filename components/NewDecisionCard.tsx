@@ -234,7 +234,7 @@ export default function DecisionCard({
 
     // Default Expanded Card
     return (
-        <div className="glass-panel decision-card" style={{
+        <div className="glass-panel decision-card max-h-[85vh] md:max-h-[65vh] overflow-hidden" style={{
             pointerEvents: 'auto',
             position: 'fixed',
             top: '5rem', // Moved up for more space
@@ -245,8 +245,7 @@ export default function DecisionCard({
             flexDirection: 'column',
             maxWidth: '400px',
             width: '90%',
-            maxHeight: '60vh',
-            overflow: 'hidden' // FIXED: Prevent main container from scrolling
+            // maxHeight and overflow moved to Tailwind classes
         }}
             onClick={(e) => e.stopPropagation()}
         >
