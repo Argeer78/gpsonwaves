@@ -183,10 +183,10 @@ export default function Home() {
                 {user.image ? (
                   <img src={user.image} alt={user.name || 'User'} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  user.name.charAt(0)
+                  (user.name || 'User').charAt(0)
                 )}
               </div>
-              <span className="text-sm font-medium pr-1 hidden sm:inline">{user.name.split(' ')[0]}</span>
+              <span className="text-sm font-medium pr-1 hidden sm:inline">{(user.name || 'User').split(' ')[0]}</span>
               {user.isPro && <Crown size={14} className="text-amber-400" fill="currentColor" />}
             </>
           ) : (
