@@ -15,7 +15,7 @@ export default function AdminPage() {
 
     useEffect(() => {
         if (!isLoading) {
-            if (!user || user.email.toLowerCase() !== 'sgouros2305@gmail.com') {
+            if (!user || !user.email || user.email.toLowerCase() !== 'sgouros2305@gmail.com') {
                 router.push('/');
             } else if (!isAuthorized) {
                 setIsAuthorized(true);
