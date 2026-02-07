@@ -15,7 +15,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
     // Local state for editing form
     const [name, setName] = useState(user?.name || '');
-    const [photoUrl, setPhotoUrl] = useState(user?.photoUrl || '');
+    const [imageUrl, setImageUrl] = useState(user?.image || '');
 
     // Boat specs
     const [boatName, setBoatName] = useState(user?.boatSettings?.name || '');
@@ -40,7 +40,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
         updateUser({
             name,
-            photoUrl,
+            image: imageUrl,
             boatSettings: {
                 name: boatName,
                 draft: parseFloat(boatDraft) || 0,
@@ -72,7 +72,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             }
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPhotoUrl(reader.result as string);
+                setImageUrl(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
@@ -120,8 +120,8 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         {/* Avatar / Upload Trigger */}
                         <div className="relative group shrink-0">
                             <div className="w-20 h-20 rounded-full bg-slate-800 overflow-hidden border-2 border-slate-600 flex items-center justify-center relative shadow-lg">
-                                {photoUrl ? (
-                                    <img src={photoUrl} alt={name} className="w-full h-full object-cover" />
+                                {imageUrl ? (
+                                    <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
                                 ) : (
                                     <User size={36} color="white" />
                                 )}
@@ -392,8 +392,8 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean, on
         <button
             onClick={onClick}
             className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all text-sm font-semibold relative overflow-hidden group ${active
-                    ? 'bg-emerald-500/10 border border-emerald-500/20 shadow-sm'
-                    : 'hover:bg-white/5 border border-transparent'
+                ? 'bg-emerald-500/10 border border-emerald-500/20 shadow-sm'
+                : 'hover:bg-white/5 border border-transparent'
                 }`}
         >
             <Icon
