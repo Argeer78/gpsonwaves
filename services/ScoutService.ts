@@ -19,23 +19,21 @@ export const ScoutService = {
             const offset = 0.0002;
             const bbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
             // Corrected Typename found via search: coral-atlas:benthic_data_verbose
-            const url = `https://allencoralatlas.org/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=coral-atlas:benthic_data_verbose&maxFeatures=1&outputFormat=application/json&bbox=${bbox}&srsName=EPSG:4326`;
+            // Corrected Typename found via search: coral-atlas:benthic_data_verbose
+            // Proxy via our backend to avoid CORS
+            const url = `/api/reef-scan?bbox=${bbox}`;
 
             const res = await fetch(url);
-            const text = await res.text();
+            // const text = await res.text(); // We expect JSON now directly from proxy or error
+            const data = await res.json();
 
-            if (!res.ok) {
-                console.warn("WFS HTTP Error:", res.status, text);
+            if (data.error) {
+                console.warn("WFS Proxy Error:", data.error);
                 return { isReef: false, type: 'unknown' };
             }
 
-            if (text.trim().startsWith('<')) {
-                // Log the FULL error to debug parameters
-                console.warn("WFS XML Error (Full):", text);
-                return { isReef: false, type: 'unknown' };
-            }
-
-            const data = JSON.parse(text);
+            // Old text check not needed for JSON
+            // const data = JSON.parse(text);
             if (data.features && data.features.length > 0) {
                 const f = data.features[0];
                 const class_name = f.properties?.class_name || 'Unknown';
@@ -100,22 +98,20 @@ async function fetchRealReefs(lat: number, lng: number): Promise<ScoutSpot[]> {
         // WFS Bounding Box (~500m radius = 0.005 deg)
         const offset = 0.005;
         const bbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
-        const url = `https://allencoralatlas.org/geoserver/wfs?service=WFS&version=1.0.0&request=GetFeature&typeName=coral-atlas:benthic_data_verbose&maxFeatures=5&outputFormat=application/json&bbox=${bbox}&srsName=EPSG:4326`;
+        const url = `/api/reef-scan?bbox=${bbox}`;
 
         const res = await fetch(url);
-        const text = await res.text();
+        const data = await res.json();
+        // const text = await res.text();
 
-        if (!res.ok) {
-            console.warn("WFS HTTP Error:", res.status, text);
+        if (data.error) {
+            console.warn("WFS Proxy Error:", data.error);
             return [];
         }
 
-        if (text.trim().startsWith('<')) {
-            console.warn("WFS Returned XML (Error):", text.substring(0, 300));
-            return [];
-        }
+        // if (text.trim().startsWith('<')) ... logic removed
 
-        const data = JSON.parse(text);
+        // const data = JSON.parse(text);
         if (!data.features) return [];
 
         return data.features.map((f: any) => {

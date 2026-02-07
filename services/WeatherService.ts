@@ -58,30 +58,20 @@ export const getCurrentWeather = async (lat: number, lng: number): Promise<Weath
     }
 
     try {
-        // Parallel requests to Open-Meteo Forecast (Air) and Marine (Water) APIs
-        const [weatherRes, marineRes] = await Promise.all([
-            fetch(
-                `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,is_day&wind_speed_unit=kmh`
-            ),
-            fetch(
-                `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&current=wave_height,wave_direction,wave_period&hourly=sea_surface_temperature&timezone=auto`
-            )
-        ]);
+        // Call our internal proxy to avoid CORS
+        const res = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
 
-        if (weatherRes.status === 429 || marineRes.status === 429) {
-            console.warn("Weather API Limit Reached (429). Returning cached if available or null.");
-            // Determine if we have *any* old cache to fallback to?
-            // For now, just return null to avoid crashing UI
+        if (res.status === 429) {
+            console.warn("Weather API Limit Reached (429). Returning cached if available.");
             return cached ? cached.data : null;
         }
 
-        if (!weatherRes.ok) {
-            console.warn(`Weather API Error: ${weatherRes.status}`);
+        if (!res.ok) {
+            console.warn(`Weather API Error: ${res.status}`);
             return null;
         }
 
-        const weatherData = await weatherRes.json();
-        const marineData = marineRes.ok ? await marineRes.json() : null;
+        const { weather: weatherData, marine: marineData } = await res.json();
 
         const current = weatherData.current;
         const marineCurrent = marineData?.current || {};
