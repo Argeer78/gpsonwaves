@@ -180,8 +180,8 @@ export default function Home() {
           {user ? (
             <>
               <div className="rounded-full bg-emerald-500 flex items-center justify-center text-xs font-bold ring-2 ring-emerald-500/30" style={{ width: '1.5rem', height: '1.5rem' }}>
-                {user.photoUrl ? (
-                  <img src={user.photoUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
+                {user.image ? (
+                  <img src={user.image} alt={user.name || 'User'} className="w-full h-full rounded-full object-cover" />
                 ) : (
                   user.name.charAt(0)
                 )}
