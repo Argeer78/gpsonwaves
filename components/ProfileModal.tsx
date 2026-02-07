@@ -222,7 +222,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                                 <div className="relative">
                                                     <input
                                                         type="text"
-                                                        value={user.email}
+                                                        value={user.email || ''}
                                                         disabled
                                                         className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3.5 text-slate-400 cursor-not-allowed font-mono text-sm"
                                                     />
