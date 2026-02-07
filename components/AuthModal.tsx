@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Mail, Lock, User as UserIcon, Loader2 } from 'lucide-react';
-import { useUser } from '@/context/UserContext';
+import { X, Mail, Lock, User as UserIcon, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 interface AuthModalProps {
     isOpen: boolean;
@@ -10,47 +11,87 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
-    const { login } = useUser();
+    const router = useRouter();
     const [mode, setMode] = useState<'login' | 'signup' | 'verify'>('login');
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     // Form State
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
+    const [code, setCode] = useState('');
 
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError('');
 
-        if (mode === 'signup') {
-            // First step: Trigger Email (Simulation)
-            setTimeout(() => {
-                setMode('verify');
-                setIsLoading(false);
-            }, 1000);
-            return;
-        }
+        try {
+            if (mode === 'signup') {
+                // Register User -> Sends Email
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password }),
+                });
 
-        if (mode === 'verify') {
-            // Second step: Verify Code
-            setTimeout(() => {
-                // In a real app, verify code here.
-                login(name || email.split('@')[0], email);
-                setIsLoading(false);
-                onClose();
-            }, 1000);
-            return;
-        }
+                if (res.ok) {
+                    setMode('verify'); // Move to verification step
+                } else {
+                    const text = await res.text();
+                    setError(text || 'Registration failed');
+                }
+            } else if (mode === 'verify') {
+                // Verify Code
+                const res = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code }),
+                });
 
-        // Login Mode
-        setTimeout(() => {
-            login(name || email.split('@')[0], email);
+                if (res.ok) {
+                    // Auto-login after verification
+                    const loginRes = await signIn('credentials', {
+                        email,
+                        password,
+                        redirect: false,
+                    });
+
+                    if (loginRes?.ok) {
+                        onClose();
+                        router.refresh();
+                    } else {
+                        // Weird edge case: Verified but login failed
+                        setMode('login');
+                        setError('Verified! Please log in.');
+                    }
+                } else {
+                    const text = await res.text();
+                    setError(text || 'Invalid code');
+                }
+            } else {
+                // Login
+                const callback = await signIn('credentials', {
+                    email,
+                    password,
+                    redirect: false,
+                });
+
+                if (callback?.error) {
+                    setError('Invalid email or password');
+                } else if (callback?.ok) {
+                    onClose();
+                    router.refresh();
+                }
+            }
+        } catch (err) {
+            setError('Something went wrong. Please try again.');
+        } finally {
             setIsLoading(false);
-            onClose();
-        }, 1500);
+        }
     };
 
     return (
@@ -87,7 +128,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <h2 className="text-xl font-bold font-outfit text-white" style={{ margin: 0 }}>
-                        {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                        {mode === 'login' ? 'Welcome Back' : mode === 'verify' ? 'Verify Email' : 'Create Account'}
                     </h2>
                     <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer' }}>
                         <X size={20} />
@@ -96,11 +137,20 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
                 <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
+                    {error && (
+                        <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                            <AlertCircle size={16} />
+                            {error}
+                        </div>
+                    )}
+
                     {mode === 'verify' && (
                         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg mb-4 text-center">
-                                <p className="text-emerald-400 text-sm font-bold mb-1">Check your email!</p>
-                                <p className="text-white/60 text-xs">We sent a verification code to {email}</p>
+                                <p className="text-emerald-400 text-sm font-bold mb-1 flex items-center justify-center gap-2">
+                                    <Mail size={16} /> Code Sent!
+                                </p>
+                                <p className="text-white/60 text-xs">Check <strong>{email}</strong> for your 6-digit code.</p>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -112,6 +162,8 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                         placeholder="123456"
                                         className="text-center tracking-[0.5em] font-mono text-xl"
                                         maxLength={6}
+                                        value={code}
+                                        onChange={(e) => setCode(e.target.value)}
                                         style={{
                                             width: '100%',
                                             backgroundColor: 'rgba(255,255,255,0.05)',
@@ -124,9 +176,6 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                     />
                                 </div>
                             </div>
-                            <p className="text-center text-xs text-white/40 mt-2">
-                                (For testing, enter any code)
-                            </p>
                         </div>
                     )}
 
@@ -221,23 +270,51 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             justifyContent: 'center',
                             gap: '0.5rem',
                             border: 'none',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            opacity: isLoading ? 0.7 : 1
                         }}
                     >
-                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : mode === 'signup' ? 'Create Account' : 'Verify & Login')}
+                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : mode === 'verify' ? 'Verify Code' : 'Create Account')}
                     </button>
 
                 </form>
 
                 {/* Footer */}
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-                    <button
-                        onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                        style={{ color: 'var(--color-accent-good)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
-                    >
-                        {mode === 'login' ? 'Sign Up' : 'Log In'}
-                    </button>
+                    {mode === 'login' ? "Don't have an account? " : mode === 'signup' ? "Already have an account? " : ""}
+
+                    {mode !== 'verify' && (
+                        <button
+                            onClick={() => {
+                                setMode(mode === 'login' ? 'signup' : 'login');
+                                setError('');
+                            }}
+                            style={{ color: 'var(--color-accent-good)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                            {mode === 'login' ? 'Sign Up' : 'Log In'}
+                        </button>
+                    )}
+
+                    {mode === 'verify' && (
+                        <button
+                            type="button"
+                            onClick={() => setMode('signup')}
+                            style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                        >
+                            &larr; Back to Sign Up
+                        </button>
+                    )}
+
+                    {mode === 'login' && (
+                        <div style={{ marginTop: '0.5rem' }}>
+                            <button
+                                onClick={() => router.push('/forgot-password')}
+                                style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                                Forgot Password?
+                            </button>
+                        </div>
+                    )}
                 </div>
 
             </div>

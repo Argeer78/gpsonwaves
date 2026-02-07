@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 
 import { UserProvider } from "@/context/UserContext";
 import { SensorProvider } from "@/context/SensorContext";
+import { Providers } from "@/components/Providers";
 import InstallPrompt from "@/components/InstallPrompt";
 
 // ...
@@ -35,12 +36,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <UserProvider>
-          <SensorProvider>
-            {children}
-          </SensorProvider>
-        </UserProvider>
-        <InstallPrompt />
+        <Providers>
+          <UserProvider>
+            <SensorProvider>
+              {children}
+            </SensorProvider>
+          </UserProvider>
+          <InstallPrompt />
+        </Providers>
       </body>
     </html>
   );

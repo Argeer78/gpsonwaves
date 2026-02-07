@@ -234,19 +234,19 @@ export default function DecisionCard({
 
     // Default Expanded Card
     return (
-        <div className="glass-panel decision-card max-h-[85dvh] md:max-h-[65vh] overflow-hidden" style={{
+        <div className="glass-panel decision-card" style={{
             pointerEvents: 'auto',
             position: 'fixed',
-            top: '4.5rem', // Adjusted for mobile header
+            top: '4.5rem',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 1001, // Boost z-index
+            zIndex: 1001,
             display: 'flex',
             flexDirection: 'column',
             maxWidth: '400px',
-            width: '95%', // Slightly wider on mobile
-            overscrollBehavior: 'contain'
-            // maxHeight and overflow controlled by Tailwind
+            width: '95%',
+            maxHeight: '70dvh', // Stricter height (70% of screen)
+            overflow: 'hidden'
         }}
             onClick={(e) => e.stopPropagation()}
         >
@@ -341,7 +341,7 @@ export default function DecisionCard({
             </div>
 
             {/* Scrollable Content Body */}
-            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.25rem' }} className="custom-scrollbar">
+            <div style={{ overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: '0.25rem' }} className="custom-scrollbar">
 
                 {/* Score or Land Override */}
                 <div className="flex flex-col items-center justify-center gap-2 mb-4">

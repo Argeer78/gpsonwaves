@@ -1,13 +1,15 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 
 type User = {
-    name: string;
-    email: string;
+    id?: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
     isPro: boolean;
     isAdmin?: boolean;
-    photoUrl?: string;
     boatSettings?: {
         name: string;
         draft: number; // meters
@@ -23,7 +25,6 @@ type User = {
 type UserContextType = {
     user: User | null;
     isLoading: boolean;
-    login: (name: string, email: string) => void;
     logout: () => void;
     upgradeToPro: () => void;
     updateUser: (updates: Partial<User>) => void;
@@ -32,62 +33,54 @@ type UserContextType = {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
+    const { data: session, status } = useSession();
     const [user, setUser] = useState<User | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check local storage on mount
-        const savedUser = localStorage.getItem('gpsonwaves-user');
-        if (savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-            } catch (e) {
-                console.error("Failed to parse user", e);
-            }
+        if (session?.user) {
+            // Merge session user with base structure
+            // Note: In a real app, you might fetch extra profile data (boatSettings) here if not in session
+            setUser({
+                id: session.user.id,
+                name: session.user.name,
+                email: session.user.email,
+                image: session.user.image,
+                isPro: (session.user as any).isPro || false,
+                isAdmin: (session.user as any).isAdmin || false,
+                // Default settings if missing (or fetch from API)
+                preferences: { units: 'metric', theme: 'dark' }
+            });
+        } else {
+            setUser(null);
         }
-        setIsLoading(false);
-    }, []);
-
-    const login = (name: string, email: string) => {
-        // Simulate API call
-        const isAdmin = email.toLowerCase() === 'sgouros2305@gmail.com';
-        const newUser: User = {
-            name,
-            email,
-            isPro: isAdmin, // Admins get Pro for free
-            isAdmin,
-            preferences: {
-                units: 'metric',
-                theme: 'dark'
-            }
-        };
-        setUser(newUser);
-        localStorage.setItem('gpsonwaves-user', JSON.stringify(newUser));
-    };
+    }, [session]);
 
     const logout = () => {
-        setUser(null);
-        localStorage.removeItem('gpsonwaves-user');
+        signOut();
     };
 
     const upgradeToPro = () => {
+        // TODO: Implement Stripe integration here
         if (user) {
-            const updatedUser = { ...user, isPro: true };
-            setUser(updatedUser);
-            localStorage.setItem('gpsonwaves-user', JSON.stringify(updatedUser));
+            setUser({ ...user, isPro: true });
         }
     };
 
     const updateUser = (updates: Partial<User>) => {
         if (user) {
-            const updatedUser = { ...user, ...updates };
-            setUser(updatedUser);
-            localStorage.setItem('gpsonwaves-user', JSON.stringify(updatedUser)); // Persist
+            setUser({ ...user, ...updates });
+            // TODO: Call API to persist changes
         }
     };
 
     return (
-        <UserContext.Provider value={{ user, isLoading, login, logout, upgradeToPro, updateUser }}>
+        <UserContext.Provider value={{
+            user,
+            isLoading: status === 'loading',
+            logout,
+            upgradeToPro,
+            updateUser
+        }}>
             {children}
         </UserContext.Provider>
     );

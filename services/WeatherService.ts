@@ -43,7 +43,20 @@ const getWeatherLabel = (code: number): string => {
     return 'Unknown';
 };
 
+// Cache storage: "lat,lng" -> { timestamp, data }
+const weatherCache = new Map<string, { timestamp: number; data: WeatherResult }>();
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
+
 export const getCurrentWeather = async (lat: number, lng: number): Promise<WeatherResult | null> => {
+    // 1. Check Cache
+    const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}`; // ~100m precision
+    const cached = weatherCache.get(cacheKey);
+
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION)) {
+        // console.log("Weather Cache Hit ⚡"); 
+        return cached.data;
+    }
+
     try {
         // Parallel requests to Open-Meteo Forecast (Air) and Marine (Water) APIs
         const [weatherRes, marineRes] = await Promise.all([
@@ -55,7 +68,17 @@ export const getCurrentWeather = async (lat: number, lng: number): Promise<Weath
             )
         ]);
 
-        if (!weatherRes.ok) throw new Error('Weather API failed');
+        if (weatherRes.status === 429 || marineRes.status === 429) {
+            console.warn("Weather API Limit Reached (429). Returning cached if available or null.");
+            // Determine if we have *any* old cache to fallback to?
+            // For now, just return null to avoid crashing UI
+            return cached ? cached.data : null;
+        }
+
+        if (!weatherRes.ok) {
+            console.warn(`Weather API Error: ${weatherRes.status}`);
+            return null;
+        }
 
         const weatherData = await weatherRes.json();
         const marineData = marineRes.ok ? await marineRes.json() : null;
@@ -71,7 +94,7 @@ export const getCurrentWeather = async (lat: number, lng: number): Promise<Weath
             waterTemp = marineData.hourly.sea_surface_temperature[currentHour];
         }
 
-        return {
+        const result: WeatherResult = {
             temp: current.temperature_2m,
             waterTemp: waterTemp,
             windSpeed: current.wind_speed_10m,
@@ -84,6 +107,12 @@ export const getCurrentWeather = async (lat: number, lng: number): Promise<Weath
             wavePeriod: marineCurrent.wave_period ?? 0,
             beaufort: getBeaufort(current.wind_speed_10m)
         };
+
+        // 2. Save to Cache
+        weatherCache.set(cacheKey, { timestamp: Date.now(), data: result });
+
+        return result;
+
     } catch (error) {
         console.error("Failed to fetch weather:", error);
         return null; // Fail gracefully
