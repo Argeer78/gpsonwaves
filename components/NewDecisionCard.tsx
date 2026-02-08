@@ -353,6 +353,9 @@ export default function DecisionCard({
                             <div className="text-xl font-bold text-center text-slate-400 uppercase tracking-[0.2em]">
                                 LAND
                             </div>
+                            <div className="text-xs text-slate-500 font-medium animate-pulse">
+                                Tap on water to analyze
+                            </div>
                         </>
                     ) : (
                         <>
@@ -374,6 +377,51 @@ export default function DecisionCard({
                         </div>
                     )}
                 </div>
+
+                {/* Weather & Sea Conditions (Moved UP for Mobile Visibility) */}
+                {weather && (
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.75rem' }}>
+                        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
+                            <Wind size={14} />
+                            Live Conditions
+                        </h3>
+                        <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                            {/* Wind */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-muted">Wind (Beaufort {weather.beaufort})</span>
+                                <div className="flex items-center gap-1">
+                                    <span className="font-bold text-sm text-white">{weather.windSpeed} km/h</span>
+                                    <span className="text-xs text-slate-400" style={{ transform: `rotate(${weather.windDirection}deg)` }}>↓</span>
+                                </div>
+                            </div>
+                            {/* Weather */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-muted">Sky</span>
+                                <span className="font-bold text-sm text-white">{weather.condition}</span>
+                            </div>
+                            {/* Waves */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-muted">Waves</span>
+                                <div className="flex items-center gap-1">
+                                    <Waves size={14} className="text-blue-400" />
+                                    <span className="font-bold text-sm text-white">
+                                        {weather.waveHeight?.toFixed(1)}m
+                                    </span>
+                                    <span className="text-xs text-slate-400">
+                                        {weather.wavePeriod}s
+                                    </span>
+                                </div>
+                            </div>
+                            {/* Air/Water Temp */}
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-muted">Temps (Air/Water)</span>
+                                <span className="font-bold text-sm text-white">
+                                    {Math.round(weather.temp)}° <span className="text-slate-500">/</span> {weather.waterTemp ? Math.round(weather.waterTemp) : '--'}°
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Explanation */}
                 <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.75rem' }}>
@@ -437,51 +485,6 @@ export default function DecisionCard({
                     )}
                     <span>{isScouting ? 'AI Analyzing Area...' : 'AI Local Scout (500m)'}</span>
                 </button>
-
-                {/* Weather & Sea Conditions */}
-                {weather && (
-                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '0.75rem' }}>
-                        <h3 className="font-bold text-xs uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-2">
-                            <Wind size={14} />
-                            Live Conditions
-                        </h3>
-                        <div className="grid grid-cols-2 gap-y-2 gap-x-4">
-                            {/* Wind */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-muted">Wind (Beaufort {weather.beaufort})</span>
-                                <div className="flex items-center gap-1">
-                                    <span className="font-bold text-sm text-white">{weather.windSpeed} km/h</span>
-                                    <span className="text-xs text-slate-400" style={{ transform: `rotate(${weather.windDirection}deg)` }}>↓</span>
-                                </div>
-                            </div>
-                            {/* Weather */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-muted">Sky</span>
-                                <span className="font-bold text-sm text-white">{weather.condition}</span>
-                            </div>
-                            {/* Waves */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-muted">Waves</span>
-                                <div className="flex items-center gap-1">
-                                    <Waves size={14} className="text-blue-400" />
-                                    <span className="font-bold text-sm text-white">
-                                        {weather.waveHeight?.toFixed(1)}m
-                                    </span>
-                                    <span className="text-xs text-slate-400">
-                                        {weather.wavePeriod}s
-                                    </span>
-                                </div>
-                            </div>
-                            {/* Air/Water Temp */}
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-muted">Temps (Air/Water)</span>
-                                <span className="font-bold text-sm text-white">
-                                    {Math.round(weather.temp)}° <span className="text-slate-500">/</span> {weather.waterTemp ? Math.round(weather.waterTemp) : '--'}°
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Travel Time / ETA */}
                 {travelData && (
