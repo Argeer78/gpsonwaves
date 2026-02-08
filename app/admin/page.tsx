@@ -65,7 +65,7 @@ export default function AdminPage() {
                             <span className="text-sm font-medium">Back</span>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-white font-outfit mb-1">Admin Dashboard</h1>
+                            <h1 className="text-3xl font-bold text-white font-outfit mb-1">Admin Dashboard (v2.1)</h1>
                             <p className="text-white/50 text-sm">Overview of platform statistics and user activity</p>
                         </div>
                     </div>
