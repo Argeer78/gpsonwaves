@@ -1,12 +1,12 @@
 'use client';
 
+import React from 'react';
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, LayersControl, LayerGroup, WMSTileLayer, Circle, ZoomControl, ScaleControl, Polyline, Tooltip } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { ScoutSpot } from '@/services/ScoutService';
-
-import { Ruler, Locate, Ship, Wifi } from 'lucide-react';
+import { Ruler, Anchor, MapPin, Navigation, Info, Locate, Layers, Lock, CheckCircle2, Ship, Wifi } from 'lucide-react';
 import { useSensor } from '@/context/SensorContext';
 
 // Dynamic Boat Marker Component
@@ -201,96 +201,7 @@ function MapInteractions({
 
 
 
-// Guard Component for Pro Layers
-function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, trackerRef, satelliteRef }: {
-    isPro: boolean,
-    isAuthenticated: boolean,
-    onShowPricing?: (reason: string) => void,
-    onShowAuth?: () => void,
-    trackerRef: React.MutableRefObject<L.Layer | null>,
-    satelliteRef: React.MutableRefObject<L.TileLayer | null>
-}) {
-    const map = useMapEvents({
-        overlayadd: (e) => {
-            // Define restricted layers
-            const restrictedLayers = ["Reef Maps", "Seabed", "NOAA", "Nautical Charts", "Ocean Relief"];
-            const isRestricted = restrictedLayers.some(l => e.name.includes(l));
-
-            if (isRestricted) {
-                // Determine block reason
-                const isGuest = !isAuthenticated;
-                const isFree = isAuthenticated && !isPro;
-
-                if (isGuest || isFree) {
-                    setTimeout(() => {
-                        e.target.removeLayer(e.layer);
-                        if (isGuest && onShowAuth) onShowAuth();
-                        else if (isFree && onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
-                    }, 0); // Immediate
-                }
-            }
-        },
-        baselayerchange: (e) => {
-            const restrictedBaseLayers = ["Seabed", "NOAA", "Ocean"];
-            const isRestricted = restrictedBaseLayers.some(l => e.name.includes(l));
-
-            const isGuest = !isAuthenticated;
-            const isFree = isAuthenticated && !isPro;
-
-            if (isRestricted && (isGuest || isFree)) {
-
-                // Force Revert
-                setTimeout(() => {
-                    let revertTarget = trackerRef.current || satelliteRef.current;
-
-                    // aggressively find Satellite if refs failed
-                    if (!revertTarget) {
-                        map.eachLayer((layer: any) => {
-                            if (layer.options && layer.options.id === 'satellite-layer') {
-                                revertTarget = layer;
-                            }
-                            // Fallback: check tile URL
-                            if (!revertTarget && layer._url && layer._url.includes('World_Imagery')) {
-                                revertTarget = layer;
-                            }
-                        });
-                    }
-
-                    if (revertTarget) {
-                        map.addLayer(revertTarget);
-                    } else {
-                        // Nuclear Fallback: Refs are dead, internal search failed.
-                        // Create a brand new layer to ensure we hide the restricted content.
-                        console.warn("LayerGuard: Refs lost. Instantiating emergency fallback layer.");
-                        const emergencyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                            attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
-                        });
-                        map.addLayer(emergencyLayer);
-
-                        // Update safe ref so next time we have something
-                        trackerRef.current = emergencyLayer;
-                    }
-
-                    if (isGuest && onShowAuth) onShowAuth();
-                    else if (isFree && onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
-
-                }, 100); // Increased timeout to ensure Leaflet state settles
-            } else {
-                // If it's a safe layer (not restricted), update our tracker
-                if (!isRestricted) {
-                    trackerRef.current = e.layer;
-                }
-            }
-        },
-        // Capture initial layer (or subsequent safe ones)
-        layeradd: (e) => {
-            // We can't easily detect if it's a base layer here generically without checking names
-            // But we can fallback to the ref set by the parent
-        }
-    });
-
-    return null;
-}
+// Guard Component Removed - Replaced with UI Layer Switcher
 
 export default function MapComponent({ center, onLocationSelect, userLocation, structures = [], scoutSpots = [], isPro = false, isAuthenticated = false, onShowPricing, onShowAuth }: MapComponentProps) {
     // Measurement State
@@ -301,18 +212,244 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
     const satelliteRef = useRef<L.TileLayer>(null);
 
     // Track the last safe layer so we can revert to it (e.g. Dark Map -> Pro Map -> Back to Dark Map)
-    // Initialize the safe layer ref once the Satellite layer is mounted
-    useEffect(() => {
-        if (satelliteRef.current) {
-            lastSafeLayerRef.current = satelliteRef.current;
-        }
-    }, [satelliteRef]);
+    // State for Custom Layer Switching
+    const [activeBaseLayer, setActiveBaseLayer] = useState<string>('satellite');
+    const [activeOverlays, setActiveOverlays] = useState<string[]>(['nautical']); // Default overlays? Or empty.
+    const [isLayerMenuOpen, setIsLayerMenuOpen] = useState(false);
 
-    // We rely on LayerGuard to track this dynamically
-    const lastSafeLayerRef = useRef<L.Layer | null>(null);
+    // Toggle overlay helper
+    const toggleOverlay = (id: string) => {
+        setActiveOverlays(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+    };
+
+    // Layer Definitions
+    const baseLayers = [
+        {
+            id: 'satellite',
+            name: 'Satellite',
+            pro: false,
+            component: (
+                <TileLayer
+                    ref={satelliteRef}
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                />
+            )
+        },
+        {
+            id: 'dark',
+            name: 'Dark Map',
+            pro: false,
+            component: (
+                <TileLayer
+                    attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+            )
+        },
+        {
+            id: 'light',
+            name: 'Light Map',
+            pro: false,
+            component: (
+                <TileLayer
+                    attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                />
+            )
+        },
+        {
+            id: 'ocean',
+            name: 'Ocean Relief',
+            pro: true,
+            component: (
+                <TileLayer
+                    attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}"
+                    maxNativeZoom={9}
+                    maxZoom={19}
+                />
+            )
+        },
+        {
+            id: 'seabed_global',
+            name: 'Seabed (Global)',
+            pro: true,
+            component: (
+                <WMSTileLayer
+                    url="https://wms.gebco.net/mapserv?"
+                    layers="GEBCO_LATEST"
+                    format="image/png"
+                    transparent={false}
+                    attribution="GEBCO 2024 Grid (Low Res)"
+                    maxZoom={19}
+                />
+            )
+        },
+        {
+            id: 'seabed_eu',
+            name: 'Seabed (EU)',
+            pro: true,
+            component: (
+                <WMSTileLayer
+                    url="https://ows.emodnet-bathymetry.eu/wms"
+                    layers="mean_atlas_land"
+                    format="image/png"
+                    transparent={false}
+                    attribution="EMODnet Bathymetry"
+                />
+            )
+        },
+        {
+            id: 'noaa',
+            name: 'NOAA Charts (USA)',
+            pro: true,
+            component: (
+                <WMSTileLayer
+                    url="https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer"
+                    layers="0,1,2,3,4,5,6,7"
+                    format="image/png"
+                    transparent={false}
+                    attribution="NOAA Office of Coast Survey"
+                />
+            )
+        }
+    ];
+
+    const overlayLayers = [
+        {
+            id: 'reef',
+            name: 'Reef Maps (Coral)',
+            pro: true,
+            component: (
+                <WMSTileLayer
+                    url="https://allencoralatlas.org/geoserver/ows"
+                    layers="aca:benthic_mapping"
+                    format="image/png"
+                    transparent={true}
+                    attribution="Allen Coral Atlas"
+                    opacity={0.7}
+                />
+            )
+        },
+        {
+            id: 'nautical',
+            name: 'Nautical (Global)',
+            pro: true,
+            component: (
+                <TileLayer
+                    url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
+                    attribution="OpenSeaMap"
+                />
+            )
+        }
+    ];
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+
+            {/* Custom Layer Switcher Button */}
+            <button
+                onClick={() => setIsLayerMenuOpen(!isLayerMenuOpen)}
+                className="glass-panel"
+                style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    zIndex: 400,
+                    padding: '0.6rem',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: isLayerMenuOpen ? 'var(--color-accent-good)' : 'rgba(15, 23, 42, 0.8)',
+                    color: isLayerMenuOpen ? '#0f172a' : 'white',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+                title="Map Layers"
+            >
+                <Layers size={20} />
+            </button>
+
+            {/* Custom Layer Menu */}
+            {isLayerMenuOpen && (
+                <div
+                    className="glass-panel animate-in fade-in zoom-in-95 duration-200"
+                    style={{
+                        position: 'absolute',
+                        top: '4rem',
+                        right: '1rem',
+                        zIndex: 401,
+                        width: '260px',
+                        backgroundColor: 'var(--color-card-bg)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}
+                >
+                    <div className="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">Base Maps</div>
+                    <div className="space-y-1 mb-4">
+                        {baseLayers.map(layer => {
+                            const isLocked = layer.pro && !isPro;
+                            const isActive = activeBaseLayer === layer.id;
+                            return (
+                                <button
+                                    key={layer.id}
+                                    onClick={() => {
+                                        if (isLocked) {
+                                            if (!isAuthenticated && onShowAuth) onShowAuth();
+                                            else if (onShowPricing) onShowPricing(`${layer.name} (Pro Feature)`);
+                                        } else {
+                                            setActiveBaseLayer(layer.id);
+                                        }
+                                    }}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {isActive && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                                        {layer.name}
+                                    </span>
+                                    {isLocked && <Lock size={14} className="text-amber-400" />}
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    <div className="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider border-t border-white/5 pt-3">Overlays</div>
+                    <div className="space-y-1">
+                        {overlayLayers.map(layer => {
+                            const isLocked = layer.pro && !isPro;
+                            const isActive = activeOverlays.includes(layer.id);
+                            return (
+                                <button
+                                    key={layer.id}
+                                    onClick={() => {
+                                        if (isLocked && !isActive) { // Allow turning OFF if somehow active, but check lock to turn ON
+                                            if (!isAuthenticated && onShowAuth) onShowAuth();
+                                            else if (onShowPricing) onShowPricing(`${layer.name} (Pro Feature)`);
+                                        } else {
+                                            toggleOverlay(layer.id);
+                                        }
+                                    }}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                                >
+                                    <span className="flex items-center gap-2">
+                                        {isActive ? <CheckCircle2 size={14} /> : <div className="w-3.5 h-3.5" />}
+                                        {layer.name}
+                                    </span>
+                                    {isLocked && !isActive && <Lock size={14} className="text-amber-400" />}
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
 
             {/* Measure Toggle Button */}
             <button
@@ -408,100 +545,26 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                 style={{ height: "100%", width: "100%", background: '#0f172a' }}
                 zoomControl={false}
             >
-                {/* ... standard controls ... */}
+                {/* Render Active Base Layer */}
+                {baseLayers.find(l => l.id === activeBaseLayer)?.component}
+
+                {/* Render Active Overlays */}
+                {overlayLayers.map(l => (
+                    activeOverlays.includes(l.id) && <React.Fragment key={l.id}>{l.component}</React.Fragment>
+                ))}
+
+                {/* Standard Controls */}
                 <ZoomControl position="bottomright" />
                 <ScaleControl position="bottomleft" imperial={true} metric={true} />
                 <MapController center={center} />
 
-                {/* Layer Guard for Pro Features */}
-                {/* We pass the TRACKER ref, not just the initial one */}
-                <LayerGuard
-                    isPro={isPro}
-                    isAuthenticated={isAuthenticated}
-                    onShowPricing={onShowPricing}
-                    onShowAuth={onShowAuth}
-                    trackerRef={lastSafeLayerRef} // Pass the tracker
-                    satelliteRef={satelliteRef}   // Pass satellite as fallback
+                {/* Interaction Handler */}
+                <MapInteractions
+                    onSelect={onLocationSelect}
+                    isMeasuring={isMeasuring}
+                    measurePoints={measurePoints}
+                    setMeasurePoints={setMeasurePoints}
                 />
-
-                {/* ... interactions ... */}
-
-                <LayersControl position="bottomright">
-                    <LayersControl.BaseLayer checked name="Satellite">
-                        <TileLayer
-                            ref={satelliteRef}
-                            attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-                            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Dark Mappe">
-                        <TileLayer
-                            attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-                            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Light Map">
-                        <TileLayer
-                            attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Ocean Relief">
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
-                            url="https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}"
-                            maxNativeZoom={9}
-                            maxZoom={19}
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Seabed (Global Overview)">
-                        <WMSTileLayer
-                            url="https://wms.gebco.net/mapserv?"
-                            layers="GEBCO_LATEST"
-                            format="image/png"
-                            transparent={false}
-                            attribution="GEBCO 2024 Grid (Low Res)"
-                            maxZoom={19}
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="Seabed (High Res - EU)">
-                        <WMSTileLayer
-                            url="https://ows.emodnet-bathymetry.eu/wms"
-                            layers="mean_atlas_land"
-                            format="image/png"
-                            transparent={false}
-                            attribution="EMODnet Bathymetry"
-                        />
-                    </LayersControl.BaseLayer>
-                    <LayersControl.BaseLayer name="NOAA Nautical Charts (USA)">
-                        <WMSTileLayer
-                            url="https://gis.charttools.noaa.gov/arcgis/rest/services/MCS/NOAAChartDisplay/MapServer/exts/MaritimeChartService/WMSServer"
-                            layers="0,1,2,3,4,5,6,7"
-                            format="image/png"
-                            transparent={false}
-                            attribution="NOAA Office of Coast Survey"
-                        />
-                    </LayersControl.BaseLayer>
-
-                    {/* Allen Coral Atlas */}
-                    <LayersControl.Overlay name="Reef Maps (Coral/Benthic)">
-                        <WMSTileLayer
-                            url="https://allencoralatlas.org/geoserver/ows"
-                            layers="aca:benthic_mapping"
-                            format="image/png"
-                            transparent={true}
-                            attribution="Allen Coral Atlas"
-                            opacity={0.7}
-                        />
-                    </LayersControl.Overlay>
-
-                    <LayersControl.Overlay name="Nautical Charts (Global)">
-                        <TileLayer
-                            url="https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
-                            attribution="OpenSeaMap"
-                        />
-                    </LayersControl.Overlay>
-                </LayersControl>
 
                 {/* Structure Markers */}
                 <LayerGroup>
