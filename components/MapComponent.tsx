@@ -202,12 +202,13 @@ function MapInteractions({
 
 
 // Guard Component for Pro Layers
-function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, trackerRef }: {
+function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, trackerRef, satelliteRef }: {
     isPro: boolean,
     isAuthenticated: boolean,
     onShowPricing?: (reason: string) => void,
     onShowAuth?: () => void,
-    trackerRef: React.MutableRefObject<L.Layer | null>
+    trackerRef: React.MutableRefObject<L.Layer | null>,
+    satelliteRef: React.MutableRefObject<L.TileLayer | null>
 }) {
     const map = useMapEvents({
         overlayadd: (e) => {
@@ -238,12 +239,21 @@ function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, tracker
 
             if (isRestricted && (isGuest || isFree)) {
                 setTimeout(() => {
-                    // Revert to Last Safe Layer (from tracker)
-                    if (trackerRef.current) {
-                        // Remove the restricted one first? 
-                        // map.addLayer automatically handles switch for BaseLayers usually, 
-                        // but explicit add is safer.
-                        map.addLayer(trackerRef.current);
+                    // Revert Logic: 
+                    // 1. Try tracked safe layer
+                    // 2. Try satellite ref (default safe)
+                    // 3. Fallback: Iterate layers to find Satellite if ref is missing
+                    let revertLayer = trackerRef.current || satelliteRef.current;
+
+                    if (!revertLayer) {
+                        // Emergency fallback: find a layer named "Satellite" if possible, or just pick first valid
+                        // Actually, satelliteRef should be populated if rendered.
+                        console.warn("No safe layer found to revert to.");
+                    }
+
+                    if (revertLayer) {
+                        // Force switch back
+                        map.addLayer(revertLayer);
                     }
 
                     if (isGuest && onShowAuth) onShowAuth();
@@ -275,15 +285,8 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
     const satelliteRef = useRef<L.TileLayer>(null);
 
     // Track the last safe layer so we can revert to it (e.g. Dark Map -> Pro Map -> Back to Dark Map)
-    // We initialize it with Satellite (will be set in useEffect)
+    // We rely on LayerGuard to track this dynamically
     const lastSafeLayerRef = useRef<L.Layer | null>(null);
-
-    // Initialize the safe layer ref once the Satellite layer is mounted
-    useEffect(() => {
-        if (satelliteRef.current) {
-            lastSafeLayerRef.current = satelliteRef.current;
-        }
-    }, [satelliteRef]);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -309,6 +312,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                     onShowPricing={onShowPricing}
                     onShowAuth={onShowAuth}
                     trackerRef={lastSafeLayerRef} // Pass the tracker
+                    satelliteRef={satelliteRef}   // Pass satellite as fallback
                 />
 
                 {/* ... interactions ... */}
