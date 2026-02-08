@@ -51,7 +51,7 @@ export default function AdminPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 md:px-8 font-sans">
-            <div className="max-w-6xl mx-auto space-y-8">
+            <div className="space-y-8 w-full" style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
                 {/* Header */}
                 <div className="flex justify-between items-center">
@@ -65,7 +65,7 @@ export default function AdminPage() {
                             <span className="text-sm font-medium">Back</span>
                         </Link>
                         <div>
-                            <h1 className="text-3xl font-bold text-white font-outfit mb-1">Admin Dashboard (v2.1)</h1>
+                            <h1 className="text-3xl font-bold text-white font-outfit mb-1">Admin Dashboard (v2.2)</h1>
                             <p className="text-white/50 text-sm">Overview of platform statistics and user activity</p>
                         </div>
                     </div>
