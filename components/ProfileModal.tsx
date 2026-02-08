@@ -10,8 +10,9 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
-    const { user, updateUser, logout } = useUser();
+    const { user, updateUser, changePassword } = useUser();
     const [activeTab, setActiveTab] = useState<'general' | 'boat' | 'settings'>('general');
+    const [isSaving, setIsSaving] = useState(false);
 
     // Local state for editing form
     const [name, setName] = useState(user?.name || '');
@@ -29,38 +30,57 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [passwordStatus, setPasswordStatus] = useState<{ type: 'success' | 'error' | null, msg: string }>({ type: null, msg: '' });
 
     if (!isOpen || !user) return null;
 
-    const handleSave = () => {
-        if (newPassword && newPassword !== confirmPassword) {
-            alert("New passwords do not match!");
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            await updateUser({
+                name,
+                image: imageUrl,
+                boatSettings: {
+                    name: boatName,
+                    draft: parseFloat(boatDraft) || 0,
+                    length: parseFloat(boatLength) || 0,
+                    type: user.boatSettings?.type || 'motorboat'
+                },
+                preferences: {
+                    units,
+                    theme: user.preferences?.theme || 'dark'
+                }
+            });
+            onClose();
+        } catch (error) {
+            alert("Failed to save changes. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handlePasswordChange = async () => {
+        if (!currentPassword || !newPassword) {
+            setPasswordStatus({ type: 'error', msg: 'Please fill in all fields.' });
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setPasswordStatus({ type: 'error', msg: 'New passwords do not match!' });
             return;
         }
 
-        updateUser({
-            name,
-            image: imageUrl,
-            boatSettings: {
-                name: boatName,
-                draft: parseFloat(boatDraft) || 0,
-                length: parseFloat(boatLength) || 0,
-                type: user.boatSettings?.type || 'motorboat'
-            },
-            preferences: {
-                units,
-                theme: user.preferences?.theme || 'dark'
-            }
-        });
+        setIsSaving(true);
+        const result = await changePassword(currentPassword, newPassword);
+        setIsSaving(false);
 
-        if (newPassword) {
-            alert("Password updated successfully!");
+        if (result.success) {
+            setPasswordStatus({ type: 'success', msg: 'Password updated successfully!' });
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+        } else {
+            setPasswordStatus({ type: 'error', msg: result.error || 'Failed to update password.' });
         }
-
-        onClose();
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -332,6 +352,12 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                                 Change Password
                                             </div>
 
+                                            {passwordStatus.msg && (
+                                                <div className={`p-3 rounded-lg text-sm font-medium ${passwordStatus.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
+                                                    {passwordStatus.msg}
+                                                </div>
+                                            )}
+
                                             <div className="space-y-4">
                                                 <input
                                                     type="password"
@@ -356,6 +382,13 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white text-sm focus:outline-none focus:border-emerald-500 transition-all placeholder:text-slate-600"
                                                     />
                                                 </div>
+                                                <button
+                                                    onClick={handlePasswordChange}
+                                                    disabled={isSaving}
+                                                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg transition-colors border border-slate-700 disabled:opacity-50"
+                                                >
+                                                    {isSaving ? 'Updating...' : 'Update Password'}
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -375,10 +408,15 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                     </button>
                     <button
                         onClick={handleSave}
-                        className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold shadow-lg shadow-emerald-900/40 active:scale-95 transition-all flex items-center gap-2 text-sm border border-emerald-500/50"
+                        disabled={isSaving}
+                        className="px-8 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-bold shadow-lg shadow-emerald-900/40 active:scale-95 transition-all flex items-center gap-2 text-sm border border-emerald-500/50"
                     >
-                        <Save size={18} />
-                        Save Changes
+                        {isSaving ? (
+                            <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>
+                        ) : (
+                            <Save size={18} />
+                        )}
+                        {isSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
 

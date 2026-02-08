@@ -27,7 +27,8 @@ type UserContextType = {
     isLoading: boolean;
     logout: () => void;
     upgradeToPro: () => void;
-    updateUser: (updates: Partial<User>) => void;
+    updateUser: (updates: Partial<User>) => Promise<void>;
+    changePassword: (current: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -66,10 +67,47 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateUser = (updates: Partial<User>) => {
+    const updateUser = async (updates: Partial<User>) => {
         if (user) {
+            // Optimistic update
             setUser({ ...user, ...updates });
-            // TODO: Call API to persist changes
+
+            try {
+                const res = await fetch('/api/user/profile', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates),
+                });
+
+                if (!res.ok) throw new Error("Failed to update profile");
+
+                // Optional: Update with server response if needed
+                // const data = await res.json();
+                // setUser({ ...user, ...data.user });
+
+            } catch (error) {
+                console.error("Update failed", error);
+                // Revert or show toast? For now, we keep optimistic UI
+            }
+        }
+    };
+
+    const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+        try {
+            const res = await fetch('/api/user/password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentPassword, newPassword }),
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                return { success: false, error: text };
+            }
+
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: "Network error" };
         }
     };
 
@@ -79,7 +117,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             isLoading: status === 'loading',
             logout,
             upgradeToPro,
-            updateUser
+            updateUser,
+            changePassword
         }}>
             {children}
         </UserContext.Provider>
