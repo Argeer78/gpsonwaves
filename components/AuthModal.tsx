@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Mail, Lock, User as UserIcon, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, User as UserIcon, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
@@ -14,6 +14,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const router = useRouter();
     const [mode, setMode] = useState<'login' | 'signup' | 'verify' | 'forgot-password'>('login');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [successMsg, setSuccessMsg] = useState('');
 
@@ -258,7 +259,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                     <div style={{ position: 'relative' }}>
                                         <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                                         <input
-                                            type="password"
+                                            type={showPassword ? "text" : "password"}
                                             required
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
@@ -268,11 +269,30 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                                 backgroundColor: 'rgba(255,255,255,0.05)',
                                                 border: '1px solid rgba(255,255,255,0.1)',
                                                 borderRadius: '0.5rem',
-                                                padding: '0.625rem 1rem 0.625rem 2.5rem',
+                                                padding: '0.625rem 2.5rem 0.625rem 2.5rem', // Added right padding for eye icon
                                                 color: 'white',
                                                 outline: 'none'
                                             }}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            style={{
+                                                position: 'absolute',
+                                                right: '0.75rem',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: 'rgba(255,255,255,0.4)',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center'
+                                            }}
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
                                 </div>
                             )}

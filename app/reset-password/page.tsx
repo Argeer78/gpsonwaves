@@ -64,74 +64,135 @@ function ResetPasswordForm() {
 
     if (!token) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-slate-300">
-                <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-                <h1 className="text-xl font-bold text-white">Invalid Link</h1>
-                <p>The password reset link is invalid or missing.</p>
-                <button onClick={() => router.push('/')} className="mt-4 text-emerald-400 hover:underline">Return Home</button>
+            <div className="flex flex-col items-center justify-center min-h-screen text-slate-300 bg-slate-950">
+                <div className="glass-panel p-8 rounded-2xl flex flex-col items-center max-w-sm text-center border border-white/10 shadow-2xl">
+                    <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
+                    <h1 className="text-xl font-bold text-white mb-2">Invalid Link</h1>
+                    <p className="text-slate-400 text-sm mb-6">The password reset link is invalid or missing.</p>
+                    <button
+                        onClick={() => router.push('/')}
+                        className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
+                    >
+                        Return to Home
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-slate-950 px-4">
-            <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-8 shadow-2xl">
-                <div className="text-center mb-8">
-                    <h1 className="text-2xl font-bold text-white mb-2">Reset Password</h1>
-                    <p className="text-slate-400 text-sm">Enter your new password below.</p>
+        <div style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            backgroundColor: '#020617', // slate-950
+            backgroundImage: 'radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%)' // Subtle glow
+        }}>
+            <div
+                className="glass-panel animate-in fade-in zoom-in-95 duration-300"
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    maxWidth: '400px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)', // slate-900 glass
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '16px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                }}
+            >
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                    <h2 className="text-xl font-bold font-outfit text-white" style={{ margin: 0 }}>
+                        Reset Password
+                    </h2>
                 </div>
 
                 {success ? (
-                    <div className="flex flex-col items-center justify-center text-center py-8">
-                        <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4">
+                    <div className="flex flex-col items-center justify-center text-center py-10 px-6">
+                        <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mb-4 animate-in zoom-in spin-in-180 duration-500">
                             <CheckCircle2 className="w-8 h-8 text-emerald-500" />
                         </div>
-                        <h2 className="text-xl font-bold text-emerald-400 mb-2">Password Reset!</h2>
-                        <p className="text-slate-400 text-sm">You can now ensure logging in with your new password.</p>
-                        <p className="text-slate-500 text-xs mt-4">Redirecting...</p>
+                        <h2 className="text-xl font-bold text-emerald-400 mb-2">Password Update!</h2>
+                        <p className="text-slate-400 text-sm">Your password has been reset successfully.</p>
+                        <p className="text-slate-500 text-xs mt-6">Redirecting to login...</p>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                            <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2 text-red-400 text-sm animate-in slide-in-from-top-2">
                                 <AlertCircle size={16} />
                                 {error}
                             </div>
                         )}
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">New Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>New Password</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 pl-10 pr-10 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
                                     placeholder="Min 8 characters"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '0.5rem',
+                                        padding: '0.625rem 2.5rem 0.625rem 2.5rem',
+                                        color: 'white',
+                                        outline: 'none',
+                                        colorScheme: 'dark'
+                                    }}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                    style={{
+                                        position: 'absolute',
+                                        right: '0.75rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: 'rgba(255,255,255,0.4)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
 
-                        <div className="space-y-1">
-                            <label className="text-xs font-semibold text-slate-500 uppercase">Confirm Password</label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Confirm Password</label>
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
                                 <input
                                     type="password"
                                     required
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-2.5 pl-10 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-colors"
                                     placeholder="Repeat password"
+                                    style={{
+                                        width: '100%',
+                                        backgroundColor: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        borderRadius: '0.5rem',
+                                        padding: '0.625rem 1rem 0.625rem 2.5rem',
+                                        color: 'white',
+                                        outline: 'none',
+                                        colorScheme: 'dark'
+                                    }}
                                 />
                             </div>
                         </div>
@@ -139,11 +200,39 @@ function ResetPasswordForm() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            style={{
+                                width: '100%',
+                                backgroundColor: 'var(--color-accent-good)', // Emerald green from global css
+                                color: 'white',
+                                fontWeight: 'bold',
+                                padding: '0.75rem',
+                                borderRadius: '0.5rem',
+                                marginTop: '0.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                border: 'none',
+                                cursor: 'pointer',
+                                opacity: isLoading ? 0.7 : 1,
+                                transition: 'all 0.2s'
+                            }}
                         >
-                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Reset Password"}
+                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Update Password"}
                         </button>
                     </form>
+                )}
+
+                {/* Footer link back to home */}
+                {!success && (
+                    <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '1rem', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <button
+                            onClick={() => router.push('/')}
+                            className="text-slate-400 hover:text-white text-sm transition-colors"
+                        >
+                            Cancel and return home
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
@@ -152,7 +241,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500" /></div>}>
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center"><Loader2 className="animate-spin text-emerald-500 w-8 h-8" /></div>}>
             <ResetPasswordForm />
         </Suspense>
     );
