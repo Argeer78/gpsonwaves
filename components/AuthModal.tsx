@@ -12,9 +12,10 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     const router = useRouter();
-    const [mode, setMode] = useState<'login' | 'signup' | 'verify'>('login');
+    const [mode, setMode] = useState<'login' | 'signup' | 'verify' | 'forgot-password'>('login');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [successMsg, setSuccessMsg] = useState('');
 
     // Form State
     const [email, setEmail] = useState('');
@@ -28,9 +29,24 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         e.preventDefault();
         setIsLoading(true);
         setError('');
+        setSuccessMsg('');
 
         try {
-            if (mode === 'signup') {
+            if (mode === 'forgot-password') {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+
+                if (res.ok) {
+                    setSuccessMsg('If an account exists, a reset link has been sent.');
+                    // Optional: settimeout to switch back to login?
+                } else {
+                    const text = await res.text();
+                    setError(text || 'Failed to send reset link.');
+                }
+            } else if (mode === 'signup') {
                 // Register User -> Sends Email
                 const res = await fetch('/api/register', {
                     method: 'POST',
@@ -128,7 +144,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 {/* Header */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <h2 className="text-xl font-bold font-outfit text-white" style={{ margin: 0 }}>
-                        {mode === 'login' ? 'Welcome Back' : mode === 'verify' ? 'Verify Email' : 'Create Account'}
+                        {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'verify' ? 'Verify Email' : 'Reset Password'}
                     </h2>
                     <button onClick={onClose} style={{ color: 'rgba(255,255,255,0.5)', background: 'none', border: 'none', cursor: 'pointer' }}>
                         <X size={20} />
@@ -138,9 +154,16 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <form onSubmit={handleSubmit} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                     {error && (
-                        <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2 text-red-400 text-sm">
+                        <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex items-center gap-2 text-red-400 text-sm animate-in slide-in-from-top-2">
                             <AlertCircle size={16} />
                             {error}
+                        </div>
+                    )}
+
+                    {successMsg && (
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg flex items-center gap-2 text-emerald-400 text-sm animate-in slide-in-from-top-2">
+                            <CheckCircle2 size={16} />
+                            {successMsg}
                         </div>
                     )}
 
@@ -229,28 +252,30 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Password</label>
-                                <div style={{ position: 'relative' }}>
-                                    <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
-                                    <input
-                                        type="password"
-                                        required
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="••••••••"
-                                        style={{
-                                            width: '100%',
-                                            backgroundColor: 'rgba(255,255,255,0.05)',
-                                            border: '1px solid rgba(255,255,255,0.1)',
-                                            borderRadius: '0.5rem',
-                                            padding: '0.625rem 1rem 0.625rem 2.5rem',
-                                            color: 'white',
-                                            outline: 'none'
-                                        }}
-                                    />
+                            {mode !== 'forgot-password' && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                    <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>Password</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <Lock size={18} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.3)' }} />
+                                        <input
+                                            type="password"
+                                            required
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="••••••••"
+                                            style={{
+                                                width: '100%',
+                                                backgroundColor: 'rgba(255,255,255,0.05)',
+                                                border: '1px solid rgba(255,255,255,0.1)',
+                                                borderRadius: '0.5rem',
+                                                padding: '0.625rem 1rem 0.625rem 2.5rem',
+                                                color: 'white',
+                                                outline: 'none'
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </>
                     )}
 
@@ -274,20 +299,22 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                             opacity: isLoading ? 0.7 : 1
                         }}
                     >
-                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : mode === 'verify' ? 'Verify Code' : 'Create Account')}
+                        {isLoading ? <Loader2 className="animate-spin" size={20} /> : (mode === 'login' ? 'Log In' : mode === 'signup' ? 'Create Account' : mode === 'verify' ? 'Verify Code' : 'Send Reset Link')}
                     </button>
 
                 </form>
 
                 {/* Footer */}
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '1rem', textAlign: 'center', fontSize: '0.875rem', color: 'rgba(255,255,255,0.6)' }}>
-                    {mode === 'login' ? "Don't have an account? " : mode === 'signup' ? "Already have an account? " : ""}
+                    {mode === 'login' ? "Don't have an account? " : mode === 'signup' ? "Already have an account? " : mode === 'forgot-password' ? "Remember your password? " : ""}
 
                     {mode !== 'verify' && (
                         <button
                             onClick={() => {
-                                setMode(mode === 'login' ? 'signup' : 'login');
+                                if (mode === 'forgot-password') setMode('login');
+                                else setMode(mode === 'login' ? 'signup' : 'login');
                                 setError('');
+                                setSuccessMsg('');
                             }}
                             style={{ color: 'var(--color-accent-good)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                         >
@@ -308,7 +335,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     {mode === 'login' && (
                         <div style={{ marginTop: '0.5rem' }}>
                             <button
-                                onClick={() => router.push('/forgot-password')}
+                                onClick={() => setMode('forgot-password')}
                                 style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}
                             >
                                 Forgot Password?

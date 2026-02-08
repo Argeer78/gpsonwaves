@@ -259,15 +259,22 @@ function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, tracker
                     if (revertTarget) {
                         map.addLayer(revertTarget);
                     } else {
-                        // Total failure fallback: just try removing the restricted one 
-                        // (but BaseLayers are tricky, map needs one)
-                        // This shouldn't happen if Satellite is mounted.
+                        // Nuclear Fallback: Refs are dead, internal search failed.
+                        // Create a brand new layer to ensure we hide the restricted content.
+                        console.warn("LayerGuard: Refs lost. Instantiating emergency fallback layer.");
+                        const emergencyLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                            attribution: '&copy; <a href="https://www.esri.com/">Esri</a>'
+                        });
+                        map.addLayer(emergencyLayer);
+
+                        // Update safe ref so next time we have something
+                        trackerRef.current = emergencyLayer;
                     }
 
                     if (isGuest && onShowAuth) onShowAuth();
                     else if (isFree && onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
 
-                }, 10);
+                }, 100); // Increased timeout to ensure Leaflet state settles
             } else {
                 // If it's a safe layer (not restricted), update our tracker
                 if (!isRestricted) {
@@ -294,12 +301,105 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
     const satelliteRef = useRef<L.TileLayer>(null);
 
     // Track the last safe layer so we can revert to it (e.g. Dark Map -> Pro Map -> Back to Dark Map)
+    // Initialize the safe layer ref once the Satellite layer is mounted
+    useEffect(() => {
+        if (satelliteRef.current) {
+            lastSafeLayerRef.current = satelliteRef.current;
+        }
+    }, [satelliteRef]);
+
     // We rely on LayerGuard to track this dynamically
     const lastSafeLayerRef = useRef<L.Layer | null>(null);
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* ... controls ... */}
+
+            {/* Measure Toggle Button */}
+            <button
+                onClick={() => {
+                    setIsMeasuring(!isMeasuring);
+                    setMeasurePoints([]); // Clear on toggle
+                }}
+                className="glass-panel"
+                style={{
+                    position: 'absolute',
+                    bottom: '2.5rem',
+                    left: '0.75rem',
+                    zIndex: 400, // Above map
+                    padding: '0.6rem',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: isMeasuring ? 'var(--color-accent-good)' : 'rgba(15, 23, 42, 0.8)',
+                    color: isMeasuring ? '#0f172a' : 'white',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                }}
+                title="Measure Distance"
+            >
+                <Ruler size={20} />
+            </button>
+
+            {/* Locate Me Button (Always Visible) */}
+            <button
+                onClick={() => {
+                    if (userLocation) {
+                        onLocationSelect(userLocation[0], userLocation[1]);
+                    } else {
+                        // Trigger native permission request again or show toast
+                        alert("Waiting for GPS signal...");
+                    }
+                }}
+                className={`glass-panel ${!userLocation ? 'opacity-50' : ''}`}
+                style={{
+                    position: 'absolute',
+                    bottom: '5.5rem', // Above Measure Button (2.5rem + 40px + gap)
+                    left: '0.75rem',
+                    zIndex: 2000, // Boost Z-Index above everything
+                    padding: '0.6rem',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '40px',
+                    height: '40px',
+                    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+                    color: userLocation ? 'white' : '#94a3b8',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                    transition: 'all 0.2s'
+                }}
+                title="Center on My Boat"
+            >
+                {userLocation ? <Locate size={20} /> : <div className="animate-pulse"><Locate size={20} /></div>}
+            </button>
+
+            {
+                isMeasuring && measurePoints.length === 0 && (
+                    <div
+                        className="glass-panel"
+                        style={{
+                            position: 'absolute',
+                            top: '5rem',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 400,
+                            padding: '0.5rem 1rem',
+                            borderRadius: '20px',
+                            fontSize: '0.85rem',
+                            pointerEvents: 'none',
+                            textAlign: 'center'
+                        }}
+                    >
+                        Tap two points to measure
+                    </div>
+                )
+            }
 
             <MapContainer
                 center={center}
