@@ -387,13 +387,12 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                         right: '10px',
                         zIndex: 401,
                         width: '260px',
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)', // Ensure dark background
-                        backdropFilter: 'blur(12px)',
+                        backgroundColor: '#0f172a', // Hardcoded dark slate to prevent transparency issues
+                        color: 'white', // Force white text
                         borderRadius: '12px',
                         padding: '1rem',
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: 'white' // Force text color inheritance
+                        border: '1px solid rgba(255,255,255,0.1)'
                     }}
                 >
                     <div className="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Base Maps</div>
@@ -412,7 +411,12 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                                             setActiveBaseLayer(layer.id);
                                         }
                                     }}
-                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-200 hover:bg-white/10'}`}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all`}
+                                    style={{
+                                        backgroundColor: isActive ? 'rgba(16, 185, 129, 0.2)' : 'transparent', // Custom bg
+                                        color: isActive ? '#34d399' : '#e2e8f0', // Custom text color (Emerald-400 or Slate-200)
+                                        border: isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent'
+                                    }}
                                 >
                                     <span className="flex items-center gap-2">
                                         {isActive && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
@@ -440,7 +444,12 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                                             toggleOverlay(layer.id);
                                         }
                                     }}
-                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-200 hover:bg-white/10'}`}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all`}
+                                    style={{
+                                        backgroundColor: isActive ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                                        color: isActive ? '#34d399' : '#e2e8f0',
+                                        border: isActive ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent'
+                                    }}
                                 >
                                     <span className="flex items-center gap-2">
                                         {isActive ? <CheckCircle2 size={14} /> : <div className="w-3.5 h-3.5" />}
