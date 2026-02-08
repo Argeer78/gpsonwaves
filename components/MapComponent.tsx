@@ -356,8 +356,8 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                 className="glass-panel"
                 style={{
                     position: 'absolute',
-                    top: '1rem',
-                    right: '1rem',
+                    bottom: '6.5rem', // Place above ZoomControl (bottom-right)
+                    right: '10px',
                     zIndex: 400,
                     padding: '0.6rem',
                     borderRadius: '50%',
@@ -366,10 +366,11 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                     justifyContent: 'center',
                     width: '40px',
                     height: '40px',
-                    backgroundColor: isLayerMenuOpen ? 'var(--color-accent-good)' : 'rgba(15, 23, 42, 0.8)',
+                    backgroundColor: isLayerMenuOpen ? 'var(--color-accent-good)' : 'rgba(15, 23, 42, 0.9)',
                     color: isLayerMenuOpen ? '#0f172a' : 'white',
                     cursor: 'pointer',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                    border: '1px solid rgba(255,255,255,0.1)'
                 }}
                 title="Map Layers"
             >
@@ -379,21 +380,23 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
             {/* Custom Layer Menu */}
             {isLayerMenuOpen && (
                 <div
-                    className="glass-panel animate-in fade-in zoom-in-95 duration-200"
+                    className="glass-panel animate-in fade-in slide-in-from-bottom-4 duration-200"
                     style={{
                         position: 'absolute',
-                        top: '4rem',
-                        right: '1rem',
+                        bottom: '9.5rem', // Pop UP above the button
+                        right: '10px',
                         zIndex: 401,
                         width: '260px',
-                        backgroundColor: 'var(--color-card-bg)',
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)', // Ensure dark background
+                        backdropFilter: 'blur(12px)',
                         borderRadius: '12px',
                         padding: '1rem',
                         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
-                        border: '1px solid rgba(255,255,255,0.1)'
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white' // Force text color inheritance
                     }}
                 >
-                    <div className="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider">Base Maps</div>
+                    <div className="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider">Base Maps</div>
                     <div className="space-y-1 mb-4">
                         {baseLayers.map(layer => {
                             const isLocked = layer.pro && !isPro;
@@ -409,7 +412,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                                             setActiveBaseLayer(layer.id);
                                         }
                                     }}
-                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-200 hover:bg-white/10'}`}
                                 >
                                     <span className="flex items-center gap-2">
                                         {isActive && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
@@ -421,7 +424,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                         })}
                     </div>
 
-                    <div className="text-xs font-bold text-slate-500 uppercase mb-2 tracking-wider border-t border-white/5 pt-3">Overlays</div>
+                    <div className="text-xs font-bold text-slate-400 uppercase mb-2 tracking-wider border-t border-white/10 pt-3">Overlays</div>
                     <div className="space-y-1">
                         {overlayLayers.map(layer => {
                             const isLocked = layer.pro && !isPro;
@@ -437,7 +440,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                                             toggleOverlay(layer.id);
                                         }
                                     }}
-                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-300 hover:bg-white/5'}`}
+                                    className={`w-full flex items-center justify-between p-2 rounded-lg text-sm transition-all ${isActive ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-slate-200 hover:bg-white/10'}`}
                                 >
                                     <span className="flex items-center gap-2">
                                         {isActive ? <CheckCircle2 size={14} /> : <div className="w-3.5 h-3.5" />}
