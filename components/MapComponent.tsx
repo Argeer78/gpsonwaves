@@ -202,11 +202,12 @@ function MapInteractions({
 
 
 // Guard Component for Pro Layers
-function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth }: {
+function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, safeLayerRef }: {
     isPro: boolean,
     isAuthenticated: boolean,
     onShowPricing?: (reason: string) => void,
-    onShowAuth?: () => void
+    onShowAuth?: () => void,
+    safeLayerRef: React.MutableRefObject<L.TileLayer | null>
 }) {
     const map = useMapEvents({
         overlayadd: (e) => {
@@ -242,23 +243,21 @@ function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth }: {
             if (isRestricted) {
                 if (!isAuthenticated) {
                     setTimeout(() => {
-                        // Revert to Satellite (safe default) or Dark
-                        // Use a global event or context?
-                        // For now just removing isn't possible for BaseLayer, we must switch back.
-                        // Actually Leaflet logic is tricky here. 
-                        // Simplest: Show alert/modal. The layer visually changes though.
+                        // Revert to Safe Layer (Satellite)
+                        if (safeLayerRef.current) {
+                            map.addLayer(safeLayerRef.current);
+                        }
                         if (onShowAuth) onShowAuth();
-                        // Ideally we switch back to 'Satellite' programmatically, 
-                        // but access to LayersControl state is hard.
-                        // We will just show the popup. The user will see the map but be interrupted.
-                        // Or we can try map.removeLayer(e.layer) which might show gray.
-                        // Let's rely on the interruption.
                     }, 10);
                     return;
                 }
 
                 if (!isPro) {
                     setTimeout(() => {
+                        // Revert to Safe Layer (Satellite)
+                        if (safeLayerRef.current) {
+                            map.addLayer(safeLayerRef.current);
+                        }
                         if (onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
                     }, 10);
                 }
@@ -272,6 +271,9 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
     // Measurement State
     const [isMeasuring, setIsMeasuring] = useState(false);
     const [measurePoints, setMeasurePoints] = useState<L.LatLng[]>([]);
+
+    // Ref for the safe "Satellite" layer to revert to
+    const satelliteRef = useRef<L.TileLayer>(null);
 
 
     // Gating Logic
@@ -394,6 +396,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                     isAuthenticated={isAuthenticated}
                     onShowPricing={onShowPricing}
                     onShowAuth={onShowAuth}
+                    safeLayerRef={satelliteRef}
                 />
 
 
@@ -409,6 +412,7 @@ export default function MapComponent({ center, onLocationSelect, userLocation, s
                 <LayersControl position="bottomright">
                     <LayersControl.BaseLayer checked name="Satellite">
                         <TileLayer
+                            ref={satelliteRef}
                             attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
                             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                         />
