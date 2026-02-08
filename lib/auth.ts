@@ -50,7 +50,8 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-                token.isPro = user.isPro;
+                // Admins automatically get Pro status
+                token.isPro = user.isPro || user.isAdmin;
                 token.isAdmin = user.isAdmin;
             }
             return token;
