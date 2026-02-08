@@ -226,7 +226,7 @@ function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, tracker
                         e.target.removeLayer(e.layer);
                         if (isGuest && onShowAuth) onShowAuth();
                         else if (isFree && onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
-                    }, 10);
+                    }, 0); // Immediate
                 }
             }
         },
@@ -238,26 +238,35 @@ function LayerGuard({ isPro, isAuthenticated, onShowPricing, onShowAuth, tracker
             const isFree = isAuthenticated && !isPro;
 
             if (isRestricted && (isGuest || isFree)) {
-                setTimeout(() => {
-                    // Revert Logic: 
-                    // 1. Try tracked safe layer
-                    // 2. Try satellite ref (default safe)
-                    // 3. Fallback: Iterate layers to find Satellite if ref is missing
-                    let revertLayer = trackerRef.current || satelliteRef.current;
 
-                    if (!revertLayer) {
-                        // Emergency fallback: find a layer named "Satellite" if possible, or just pick first valid
-                        // Actually, satelliteRef should be populated if rendered.
-                        console.warn("No safe layer found to revert to.");
+                // Force Revert
+                setTimeout(() => {
+                    let revertTarget = trackerRef.current || satelliteRef.current;
+
+                    // aggressively find Satellite if refs failed
+                    if (!revertTarget) {
+                        map.eachLayer((layer: any) => {
+                            if (layer.options && layer.options.id === 'satellite-layer') {
+                                revertTarget = layer;
+                            }
+                            // Fallback: check tile URL
+                            if (!revertTarget && layer._url && layer._url.includes('World_Imagery')) {
+                                revertTarget = layer;
+                            }
+                        });
                     }
 
-                    if (revertLayer) {
-                        // Force switch back
-                        map.addLayer(revertLayer);
+                    if (revertTarget) {
+                        map.addLayer(revertTarget);
+                    } else {
+                        // Total failure fallback: just try removing the restricted one 
+                        // (but BaseLayers are tricky, map needs one)
+                        // This shouldn't happen if Satellite is mounted.
                     }
 
                     if (isGuest && onShowAuth) onShowAuth();
                     else if (isFree && onShowPricing) onShowPricing(`${e.name} (Pro Feature)`);
+
                 }, 10);
             } else {
                 // If it's a safe layer (not restricted), update our tracker
