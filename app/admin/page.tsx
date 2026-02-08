@@ -11,7 +11,7 @@ import { AdminUserTable } from '@/components/admin/AdminUserTable';
 export default function AdminPage() {
     const { user, isLoading } = useUser();
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [stats, setStats] = useState<any>(null);
 
     useEffect(() => {
         if (!isLoading) {
@@ -22,6 +22,22 @@ export default function AdminPage() {
             }
         }
     }, [user, isLoading, router, isAuthorized]);
+
+    // Fetch Stats
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/admin/stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            }
+        }
+        if (isAuthorized) fetchStats();
+    }, [isAuthorized]);
 
 
     if (isLoading || !isAuthorized) {
@@ -63,29 +79,29 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <AdminStatsCard
                         title="Total Users"
-                        value="1,248"
-                        change="12%"
+                        value={stats ? stats.users.total.toString() : "..."}
+                        change={stats ? stats.users.growth : "..."}
                         isPositive={true}
                         icon={Users}
                     />
                     <AdminStatsCard
                         title="Pro Subscribers"
-                        value="342"
-                        change="8.4%"
+                        value={stats ? stats.users.pro.toString() : "..."}
+                        change="0%"
                         isPositive={true}
                         icon={Shield}
                     />
                     <AdminStatsCard
-                        title="Monthly Revenue"
-                        value="$3,416"
-                        change="5.2%"
+                        title="Est. Revenue"
+                        value={stats ? `$${stats.revenue.total}` : "..."}
+                        change={stats ? stats.revenue.growth : "..."}
                         isPositive={true}
                         icon={DollarSign}
                     />
                     <AdminStatsCard
-                        title="Active Scans Today"
-                        value="156"
-                        change="-2.1%"
+                        title="Active Scans"
+                        value="0"
+                        change="0%"
                         isPositive={false}
                         icon={Activity}
                     />
@@ -104,15 +120,9 @@ export default function AdminPage() {
 
                         {/* Platform Activity */}
                         <div className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full">
-                            <h3 className="text-lg font-semibold text-white mb-4">Platform Activity</h3>
+                            <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
                             <div className="space-y-4">
-                                {[
-                                    { msg: "New user signed up", time: "2m ago", type: "user" },
-                                    { msg: "Pro subscription started", time: "15m ago", type: "sale" },
-                                    { msg: "Reef scan completed (Cyclades)", time: "42m ago", type: "scan" },
-                                    { msg: "New user signed up", time: "1h ago", type: "user" },
-                                    { msg: "Structure scan (depth) used", time: "2h ago", type: "scan" },
-                                ].map((item, i) => (
+                                {stats && stats.activity ? stats.activity.map((item: any, i: number) => (
                                     <div key={i} className="flex gap-3 items-start">
                                         <div className={`w-2 h-2 mt-2 rounded-full ${newItemColor(item.type)
                                             }`} />
@@ -121,7 +131,9 @@ export default function AdminPage() {
                                             <div className="text-xs text-white/30">{item.time}</div>
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="text-white/30 text-sm">No recent activity</div>
+                                )}
                             </div>
                         </div>
 
@@ -144,10 +156,10 @@ export default function AdminPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-white/70">Database (Simulated)</span>
+                                    <span className="text-white/70">Database (Real)</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
-                                        <span className="text-emerald-400 font-medium">Synced</span>
+                                        <span className="text-emerald-400 font-medium">Connected</span>
                                     </div>
                                 </div>
                             </div>
