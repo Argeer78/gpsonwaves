@@ -46,6 +46,24 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt"
     },
+    callbacks: {
+        async jwt({ token, user }) {
+            if (user) {
+                token.id = user.id;
+                token.isPro = user.isPro;
+                token.isAdmin = user.isAdmin;
+            }
+            return token;
+        },
+        async session({ session, token }) {
+            if (session.user) {
+                session.user.id = token.id as string;
+                session.user.isPro = token.isPro as boolean;
+                session.user.isAdmin = token.isAdmin as boolean;
+            }
+            return session;
+        }
+    },
     pages: {
         signIn: "/login",
     },

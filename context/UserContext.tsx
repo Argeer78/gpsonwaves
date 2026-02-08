@@ -45,8 +45,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 name: session.user.name,
                 email: session.user.email,
                 image: session.user.image,
-                isPro: (session.user as any).isPro || false,
-                isAdmin: (session.user as any).isAdmin || false,
+                isPro: (session.user as { isPro?: boolean }).isPro || false,
+                isAdmin: (session.user as { isAdmin?: boolean }).isAdmin || false,
                 // Default settings if missing (or fetch from API)
                 preferences: { units: 'metric', theme: 'dark' }
             });
