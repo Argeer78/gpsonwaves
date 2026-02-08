@@ -11,6 +11,7 @@ import { AdminUserTable } from '@/components/admin/AdminUserTable';
 export default function AdminPage() {
     const { user, isLoading } = useUser();
     const router = useRouter();
+    const [isAuthorized, setIsAuthorized] = useState(false);
     const [stats, setStats] = useState<any>(null);
 
     useEffect(() => {
