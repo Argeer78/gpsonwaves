@@ -59,18 +59,32 @@ export const ScoutService = {
         // 1. Fetch Real Reef Data (Parallel)
         const reefPromise = fetchRealReefs(center[0], center[1]);
 
-        // 2. Simulate Fish Finding (Parallel)
+        // 2. Simulate Fish Finding (Parallel) - Now Deterministic!
         const fishPromise = new Promise<ScoutSpot[]>((resolve) => {
             setTimeout(() => {
                 const spots: ScoutSpot[] = [];
-                const count = Math.floor(Math.random() * 3) + 2; // 2 to 4 fish spots
+
+                // Simple Seeded Random (Linear Congruential Generator)
+                // Seed based on lat/lng (fixed per location) + Hourly (changes slowly)
+                // Rounding coords to avoid micro-jitter affecting seed
+                const latFixed = Math.round(center[0] * 1000);
+                const lngFixed = Math.round(center[1] * 1000);
+                const timeSeed = Math.floor(Date.now() / (1000 * 60 * 60)); // Changes every hour
+                let seed = Math.abs(latFixed ^ lngFixed ^ timeSeed);
+
+                const nextRandom = () => {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    return seed / 233280;
+                };
+
+                const count = Math.floor(nextRandom() * 3) + 2; // 2 to 4 fish spots
 
                 for (let i = 0; i < count; i++) {
-                    const latOffset = (Math.random() - 0.5) * 0.009;
-                    const lngOffset = (Math.random() - 0.5) * 0.009;
-                    const type = getRandomType();
-                    const depth = Math.floor(Math.random() * 40) + 5;
-                    const temp = 20 + Math.random() * 5;
+                    const latOffset = (nextRandom() - 0.5) * 0.009;
+                    const lngOffset = (nextRandom() - 0.5) * 0.009;
+                    const type = getRandomType(nextRandom);
+                    const depth = Math.floor(nextRandom() * 40) + 5;
+                    const temp = 20 + nextRandom() * 5;
 
                     spots.push({
                         lat: center[0] + latOffset,
@@ -78,12 +92,12 @@ export const ScoutService = {
                         type,
                         depth,
                         temp: parseFloat(temp.toFixed(1)),
-                        confidence: Math.floor(Math.random() * 15) + 84,
-                        reason: generateReason(type, depth, temp)
+                        confidence: Math.floor(nextRandom() * 15) + 84,
+                        reason: generateReason(type, depth, temp, nextRandom)
                     });
                 }
                 resolve(spots);
-            }, 1500); // 1.5s thinking
+            }, 1000); // 1s thinking (slightly faster)
         });
 
         // 3. Wait/Merge
@@ -146,14 +160,14 @@ async function fetchRealReefs(lat: number, lng: number): Promise<ScoutSpot[]> {
     }
 }
 
-function getRandomType(): ScoutSpot['type'] {
+function getRandomType(randomFn: () => number): ScoutSpot['type'] {
     const types: ScoutSpot['type'][] = ['break', 'weed', 'rock', 'bait', 'thermal'];
-    return types[Math.floor(Math.random() * types.length)];
+    return types[Math.floor(randomFn() * types.length)];
 }
 
-function generateReason(type: string, depth: number, temp: number): string {
+function generateReason(type: string, depth: number, temp: number, randomFn: () => number): string {
     const weatherConditions = ['Overcast', 'Windy', 'Clear', 'Rain'];
-    const weather = weatherConditions[Math.floor(Math.random() * weatherConditions.length)];
+    const weather = weatherConditions[Math.floor(randomFn() * weatherConditions.length)];
 
     switch (type) {
         case 'break': return `Sharp depth change (${depth}m) creates ambush point in ${weather}.`;
