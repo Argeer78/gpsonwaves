@@ -51,7 +51,7 @@ export default function AdminPage() {
 
     return (
         <div className="min-h-screen bg-[#0a0a0a] pt-24 pb-12 px-4 md:px-8 font-sans">
-            <div className="max-w-7xl mx-auto space-y-8">
+            <div className="max-w-6xl mx-auto space-y-8">
 
                 {/* Header */}
                 <div className="flex justify-between items-center">
@@ -116,11 +116,11 @@ export default function AdminPage() {
                         <AdminUserTable />
                     </div>
 
-                    {/* Row 2: Analytics & Status Cards */}
-                    <div className="flex flex-col lg:flex-row gap-8 w-full">
+                    {/* Row 2: Analytics & Status Cards (Grid Layout instead of Flex) */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
 
-                        {/* Platform Activity */}
-                        <div className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full">
+                        {/* Recent Activity (Takes 2/3 width on large screens) */}
+                        <div className="lg:col-span-2 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full">
                             <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
                             <div className="space-y-4">
                                 {stats && stats.activity ? stats.activity.map((item: any, i: number) => (
@@ -138,29 +138,29 @@ export default function AdminPage() {
                             </div>
                         </div>
 
-                        {/* Server Status */}
-                        <div className="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full">
+                        {/* Server Status (Takes 1/3 width on large screens) */}
+                        <div className="lg:col-span-1 bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-md border border-white/10 rounded-2xl p-6 h-full">
                             <h3 className="text-lg font-semibold text-white mb-4">Server Status</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-white/70">WFS API (Coral Atlas)</span>
+                                    <span className="text-white/70">WFS API</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
-                                        <span className="text-emerald-400 font-medium">Operational</span>
+                                        <span className="text-emerald-400 font-medium">OK</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-white/70">Weather API</span>
+                                    <span className="text-white/70">Weather</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
-                                        <span className="text-emerald-400 font-medium">Operational</span>
+                                        <span className="text-emerald-400 font-medium">OK</span>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between text-sm p-3 bg-white/5 rounded-xl border border-white/5">
-                                    <span className="text-white/70">Database (Real)</span>
+                                    <span className="text-white/70">Database</span>
                                     <div className="flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]"></div>
-                                        <span className="text-emerald-400 font-medium">Connected</span>
+                                        <span className="text-emerald-400 font-medium">OK</span>
                                     </div>
                                 </div>
                             </div>
