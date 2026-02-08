@@ -3,13 +3,25 @@ import { MoreHorizontal, Shield, Star, Ban } from 'lucide-react';
 
 export function AdminUserTable() {
     // Mock Data
-    const users = [
-        { id: 1, name: "Spyros Gouros", email: "sgouros2305@gmail.com", role: "Admin", status: "Active", joinDate: "Oct 24, 2025" },
-        { id: 2, name: "Maria K.", email: "maria.k@example.com", role: "Pro", status: "Active", joinDate: "Jan 12, 2026" },
-        { id: 3, name: "John Doe", email: "john.d@example.com", role: "Free", status: "Active", joinDate: "Jan 15, 2026" },
-        { id: 4, name: "Alex R.", email: "alex.r@example.com", role: "Free", status: "Inactive", joinDate: "Jan 20, 2026" },
-        { id: 5, name: "Captain Steve", email: "steve@fishing.com", role: "Pro", status: "Active", joinDate: "Feb 01, 2026" },
-    ];
+    const [users, setUsers] = React.useState<any[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        async function fetchUsers() {
+            try {
+                const res = await fetch('/api/admin/users');
+                if (res.ok) {
+                    const data = await res.json();
+                    setUsers(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch users", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchUsers();
+    }, []);
 
     return (
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden">
@@ -32,7 +44,22 @@ export function AdminUserTable() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
-                        {users.map((user) => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-8 text-center text-white/50">
+                                    <div className="flex justify-center items-center gap-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/50"></div>
+                                        Loading users...
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : users.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-8 text-center text-white/50">
+                                    No users found.
+                                </td>
+                            </tr>
+                        ) : users.map((user) => (
                             <tr key={user.id} className="hover:bg-white/5 transition-colors group">
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-3">
