@@ -289,7 +289,7 @@ export default function DecisionCard({
                             <span className="animate-pulse">Checking depth...</span>
                         ) : depth ? (
                             depth.isLand ? (
-                                <span className="text-emerald font-bold">Land (Above Water)</span>
+                                <span style={{ color: 'var(--color-text-muted)' }}>📍 On Land — tap water to analyze</span>
                             ) : (
                                 <span>Depth: <strong>{depth.meters}m</strong> ({depth.feet}ft)</span>
                             )

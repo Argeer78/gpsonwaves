@@ -71,10 +71,11 @@ export async function GET(request: Request) {
                 const results = mapzenData.results || [];
 
                 // --- LAND CHECK FIRST ---
-                // Always inspect the CENTER pixel first (index 0).
-                // If it is clearly above sea level (> 3m), it's land — don't search neighbours.
+                // Only declare LAND if the center pixel is clearly elevated (inland).
+                // Coastal water often has 3-8m readings due to tidal noise / low resolution.
+                // 20m threshold avoids false positives for shallow/nearshore water.
                 const centerElevation = results[0]?.elevation;
-                if (typeof centerElevation === 'number' && centerElevation > 3) {
+                if (typeof centerElevation === 'number' && centerElevation > 20) {
                     // Unambiguously on land — return LAND immediately
                     return NextResponse.json({
                         results: [results[0]],
