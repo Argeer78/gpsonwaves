@@ -20,29 +20,29 @@
   "icons": [
     {
       "src": "/icon.png",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/icon.png",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
       "src": "/screenshot-desktop.png",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "sizes": "3842x2161",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "Desktop Map View"
     },
     {
       "src": "/screenshot-mobile.png",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "sizes": "2160x3840",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "Mobile Fishability Score"
     }
@@ -56,8 +56,8 @@
       "icons": [
         {
           "src": "/icon.png",
-          "sizes": "1024x1024",
-          "type": "image/jpeg"
+          "sizes": "512x512",
+          "type": "image/png"
         }
       ]
     },
@@ -69,8 +69,8 @@
       "icons": [
         {
           "src": "/icon.png",
-          "sizes": "1024x1024",
-          "type": "image/jpeg"
+          "sizes": "512x512",
+          "type": "image/png"
         }
       ]
     }
