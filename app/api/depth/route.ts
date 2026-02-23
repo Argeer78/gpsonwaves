@@ -1,18 +1,28 @@
 import { NextResponse } from 'next/server';
 
-// Helper to fetch from specific dataset
-async function fetchDataset(dataset: string, queryParam: string, interpolation: string = 'cubic') {
-    const url = `https://api.opentopodata.org/v1/${dataset}?${queryParam}&interpolation=${interpolation}`;
+// Fetch a single point from OpenTopoData
+async function fetchElevation(dataset: string, lat: number, lng: number): Promise<number | null> {
+    const url = `https://api.opentopodata.org/v1/${dataset}?locations=${lat},${lng}&interpolation=cubic`;
     const res = await fetch(url, {
-        headers: {
-            'User-Agent': 'GPSonWaves-App/1.0 (Student Project)'
-        }
+        headers: { 'User-Agent': 'GPSonWaves-App/1.0 (Student Project)' }
     });
     if (!res.ok) {
-        const msg = `Upstream [${dataset}] ${res.status} ${res.statusText}`;
-        console.error(msg);
+        const msg = `[${dataset}] ${res.status}`;
+        console.warn(msg);
         throw new Error(msg);
     }
+    const data = await res.json();
+    const elevation = data.results?.[0]?.elevation;
+    return typeof elevation === 'number' ? elevation : null;
+}
+
+// Fetch a batch of locations (pipe-separated)
+async function fetchBatch(dataset: string, locations: string): Promise<any> {
+    const url = `https://api.opentopodata.org/v1/${dataset}?locations=${encodeURIComponent(locations)}&interpolation=nearest`;
+    const res = await fetch(url, {
+        headers: { 'User-Agent': 'GPSonWaves-App/1.0 (Student Project)' }
+    });
+    if (!res.ok) throw new Error(`[${dataset}] batch ${res.status}`);
     return res.json();
 }
 
@@ -22,120 +32,116 @@ export async function GET(request: Request) {
     const lngStr = searchParams.get('lng');
     const locations = searchParams.get('locations');
 
-    if (!locations && (!latStr || !lngStr)) {
+    // --- Batch mode (structure scan) - pass through directly ---
+    if (locations) {
+        try {
+            const data = await fetchBatch('mapzen', locations);
+            return NextResponse.json({ ...data, source: 'mapzen-batch' });
+        } catch (e) {
+            try {
+                const data = await fetchBatch('gebco2020', locations);
+                return NextResponse.json({ ...data, source: 'gebco-batch' });
+            } catch (e2) {
+                return NextResponse.json({ error: 'Batch failed' }, { status: 502 });
+            }
+        }
+    }
+
+    if (!latStr || !lngStr) {
         return NextResponse.json({ error: 'Missing coordinates' }, { status: 400 });
     }
 
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+
     try {
-        // Ensure we encode the pipe for the external API call
-        let queryParam = locations
-            ? `locations=${encodeURIComponent(locations)}`
-            : `locations=${latStr},${lngStr}`;
+        // Strategy: Try GEBCO first for center point.
+        // GEBCO 2020 is a dedicated ocean bathymetry dataset — very reliable for sea vs land.
+        // Positive = land, Negative = ocean depth, 0 = sea level / coastline.
+        let elevation: number | null = null;
+        let source = '';
 
-        const isSinglePoint = !locations && latStr && lngStr;
-
-        // 13 Points total: Center + Inner Box + Outer Cross
-        const lat = parseFloat(latStr!);
-        const lng = parseFloat(lngStr!);
-        const offset = 0.001;  // ~110m radius
-        const offset2 = 0.002; // ~220m radius (Outer Ring)
-        const offset3 = 0.005; // ~550m radius (Far Outer Ring - fallback for bad pixels)
-
-        const samples = [
-            `${lat},${lng}`,                   // Center
-            `${lat + offset},${lng}`,          // N
-            `${lat - offset},${lng}`,          // S
-            `${lat},${lng + offset}`,          // E
-            `${lat},${lng - offset}`,          // W
-            `${lat + offset},${lng + offset}`, // NE
-            `${lat + offset},${lng - offset}`, // NW
-            `${lat - offset},${lng + offset}`, // SE
-            `${lat - offset},${lng - offset}`, // SW
-            // Outer Ring (Cardinal only)
-            `${lat + offset2},${lng}`,         // N2
-            `${lat - offset2},${lng}`,         // S2
-            `${lat},${lng + offset2}`,         // E2
-            `${lat},${lng - offset2}`,         // W2
-            // Far Ring (Desperation check)
-            `${lat + offset3},${lng}`,         // N3
-            `${lat - offset3},${lng}`,         // S3
-            `${lat},${lng + offset3}`,         // E3
-            `${lat},${lng - offset3}`          // W3
-        ].join('|');
-
-        // 1. Try Mapzen (Smart Sampling for Single Point)
         try {
-            if (isSinglePoint) {
-                // Smart Sampling: Fetch all sample points
-                const mapzenData = await fetchDataset('mapzen', `locations=${encodeURIComponent(samples)}`, 'nearest');
-                const results = mapzenData.results || [];
-
-                // --- LAND CHECK FIRST ---
-                // Only declare LAND if the center pixel is clearly elevated (inland).
-                // Coastal water often has 3-8m readings due to tidal noise / low resolution.
-                // 20m threshold avoids false positives for shallow/nearshore water.
-                const centerElevation = results[0]?.elevation;
-                if (typeof centerElevation === 'number' && centerElevation > 20) {
-                    // Unambiguously on land — return LAND immediately
-                    return NextResponse.json({
-                        results: [results[0]],
-                        source: 'mapzen-land'
-                    });
-                }
-
-                // Center pixel is ambiguous (coastal/tidal noise) — find best nearby water pixel
-                const waterPoints = results.filter((r: any) => r.elevation !== null && r.elevation <= 1);
-
-                if (waterPoints.length > 0) {
-                    // Bias towards DEEPEST water found (fixes "too shallow" near shore)
-                    waterPoints.sort((a: any, b: any) => a.elevation - b.elevation);
-                    return NextResponse.json({
-                        results: [waterPoints[0]],
-                        source: 'mapzen-smart-9'
-                    });
-                } else {
-                    console.log("Mapzen Smart 9 found only LAND. Falling back to GEBCO.");
-                    // Fall through to GEBCO
-                }
-            } else {
-                // Normal Batch pass-through
-                const mapzenData = await fetchDataset('mapzen', queryParam, 'nearest');
-                if (mapzenData.results?.[0]?.elevation !== null) {
-                    return NextResponse.json({ ...mapzenData, source: 'mapzen' });
-                }
-            }
+            elevation = await fetchElevation('gebco2020', lat, lng);
+            source = 'gebco2020';
         } catch (e) {
-            console.warn("Mapzen API failed, falling back to GEBCO.", e);
+            console.warn('GEBCO failed, trying Mapzen', e);
         }
 
-        // 2. Fallback to Global (GEBCO 2020) - Now with Smart Sampling!
-        // We reuse the 'samples' or 'queryParam' logic to ensure we check surrounding pixels
-        const fallbackParams = isSinglePoint
-            ? `locations=${encodeURIComponent(samples)}` // Use the SAME 13-point sample grid as Mapzen
-            : queryParam;
+        // Fallback to Mapzen if GEBCO fails
+        if (elevation === null) {
+            try {
+                elevation = await fetchElevation('mapzen', lat, lng);
+                source = 'mapzen';
+            } catch (e) {
+                console.warn('Mapzen also failed', e);
+            }
+        }
 
-        const gebcoData = await fetchDataset('gebco2020', fallbackParams);
+        if (elevation === null) {
+            return NextResponse.json({ error: 'All elevation sources failed' }, { status: 502 });
+        }
 
-        // If we used smart sampling (isSinglePoint), we need to filter for water again
-        if (isSinglePoint && gebcoData.results) {
-            const waterPoints = gebcoData.results.filter((r: any) => r.elevation !== null && r.elevation <= 1);
+        // --- Land vs Water Decision ---
+        // GEBCO: clearly negative = ocean, clearly positive = land
+        // Coastal ambiguity zone: -2 to +5m (tidal range + dataset noise)
+        // If ambiguous AND we used GEBCO, do a quick 5-point check (center + 4 cardinal ~100m)
+        if (elevation > 5) {
+            // Clearly on land — return land immediately
+            console.log(`LAND detected: ${elevation}m at ${lat},${lng} [${source}]`);
+            return NextResponse.json({
+                results: [{ elevation }],
+                source: `${source}-land`
+            });
+        }
+
+        if (elevation <= 0) {
+            // Clearly water — return depth directly
+            return NextResponse.json({
+                results: [{ elevation }],
+                source
+            });
+        }
+
+        // Ambiguous zone (0 to 5m): do a small 5-point check to confirm
+        // This handles coastal pins right at the water's edge
+        const offset = 0.001; // ~110m
+        const ambiguousPoints = [
+            `${lat},${lng}`,
+            `${lat + offset},${lng}`,
+            `${lat - offset},${lng}`,
+            `${lat},${lng + offset}`,
+            `${lat},${lng - offset}`
+        ].join('|');
+
+        try {
+            const checkData = await fetchBatch(source === 'gebco2020' ? 'gebco2020' : 'mapzen', ambiguousPoints);
+            const results = checkData.results || [];
+
+            // Find the most negative (deepest/most-water) reading
+            const waterPoints = results.filter((r: any) => typeof r.elevation === 'number' && r.elevation <= 0);
             if (waterPoints.length > 0) {
                 waterPoints.sort((a: any, b: any) => a.elevation - b.elevation);
                 return NextResponse.json({
                     results: [waterPoints[0]],
-                    source: 'gebco-smart-13'
+                    source: `${source}-coastal`
                 });
             }
+
+            // All 5 points are >= 0 with center 0-5m: it's likely land (beach/shore)
+            return NextResponse.json({
+                results: [{ elevation }],
+                source: `${source}-land`
+            });
+        } catch (e) {
+            // If ambiguity check fails, use center elevation as-is (may show slight depth)
+            return NextResponse.json({ results: [{ elevation }], source });
         }
 
-        return NextResponse.json({ ...gebcoData, source: 'gebco2020' });
-
     } catch (error: any) {
-        console.error('Depth API Proxy Critical Error:', error);
-        // Return 502 (Bad Gateway) to indicate upstream issue, with details
+        console.error('Depth API Critical Error:', error);
         return NextResponse.json({
             error: error.message || 'Failed to fetch depth',
-            details: error.toString()
         }, { status: 502 });
     }
 }
