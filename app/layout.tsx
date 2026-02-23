@@ -3,13 +3,21 @@ import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "GPSonWaves",
-  description: "Is this spot worth fishing right now?",
+  title: "GPSonWaves: Fishing Forecast & Maps",
+  description: "Know if a fishing spot is worth it right now. Marine conditions, AI forecasts, depth maps.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "GPSonWaves",
+  },
+  icons: {
+    apple: [
+      { url: "/icon.png", sizes: "1024x1024", type: "image/jpeg" },
+    ],
+    icon: [
+      { url: "/icon.png", sizes: "1024x1024", type: "image/jpeg" },
+    ],
   },
 };
 
