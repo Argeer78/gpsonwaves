@@ -200,34 +200,52 @@ export default function DecisionCard({
                     maxWidth: 'calc(100% - 1.5rem)' // Prevent overflow on small screens
                 }}
             >
-                {/* 1. Mini Score Circle */}
-                <div style={{
-                    width: '48px', // Slightly larger
-                    height: '48px',
-                    borderRadius: '50%',
-                    border: `3px solid ${scoreColor}`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: scoreColor,
-                    fontSize: '1.5rem', // Larger number
-                    fontWeight: '800', // Bolder
-                    boxShadow: `0 0 15px ${scoreColor}40`,
-                    flexShrink: 0,
-                    backgroundColor: 'rgba(15, 23, 42, 0.8)' // Darker background for contrast
-                }}>
-                    {result.score}
-                </div>
+                {/* 1. Mini Score Circle — or Land indicator */}
+                {depth?.isLand ? (
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        border: '3px solid #475569',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#64748b',
+                        flexShrink: 0,
+                        backgroundColor: 'rgba(71, 85, 105, 0.2)'
+                    }}>
+                        <MapPin size={22} />
+                    </div>
+                ) : (
+                    <div style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '50%',
+                        border: `3px solid ${scoreColor}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: scoreColor,
+                        fontSize: '1.5rem',
+                        fontWeight: '800',
+                        boxShadow: `0 0 15px ${scoreColor}40`,
+                        flexShrink: 0,
+                        backgroundColor: 'rgba(15, 23, 42, 0.8)'
+                    }}>
+                        {result.score}
+                    </div>
+                )}
 
                 {/* 2. Compact Verdict Text */}
                 <div className="flex flex-col items-start justify-center px-2">
-                    {/* Removed "Verdict" label for cleaner look */}
                     <span className="text-sm font-bold whitespace-nowrap leading-tight text-white shadow-black drop-shadow-md">
-                        {result.verdict === 'good' ? 'Worth Fishing' :
-                            result.verdict === 'borderline' ? 'Borderline' : 'Not Worth It'}
+                        {depth?.isLand ? 'On Land' : (
+                            result.verdict === 'good' ? 'Worth Fishing' :
+                                result.verdict === 'borderline' ? 'Borderline' : 'Not Worth It'
+                        )}
                     </span>
                     <span className="text-[10px] text-slate-300">
-                        Tap to expand
+                        {depth?.isLand ? 'Tap water to analyze' : 'Tap to expand'}
                     </span>
                 </div>
 
