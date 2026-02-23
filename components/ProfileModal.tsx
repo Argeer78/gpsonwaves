@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { X, User, Anchor, Settings, LogOut, ChevronRight, Crown, Save, Camera, Lock, Info, Upload } from 'lucide-react';
+import { X, User, Anchor, Settings, LogOut, ChevronRight, Crown, Save, Camera, Lock, Info, Upload, Trash2 } from 'lucide-react';
 import { useUser } from '@/context/UserContext';
+import Link from 'next/link';
 
 interface ProfileModalProps {
     isOpen: boolean;
@@ -389,6 +390,26 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                                                 >
                                                     {isSaving ? 'Updating...' : 'Update Password'}
                                                 </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4 pt-6">
+                                            <h4 className="text-sm font-bold text-rose-500/70 uppercase tracking-wider">Account Destruction</h4>
+                                            <div className="p-5 bg-rose-500/5 border border-rose-500/10 rounded-xl flex items-center justify-between group hover:bg-rose-500/10 transition-colors shadow-sm">
+                                                <div>
+                                                    <p className="font-bold text-rose-500 text-base flex items-center gap-2">
+                                                        <Trash2 size={18} />
+                                                        Delete Account
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 mt-1">Permanently remove all your fishing data</p>
+                                                </div>
+                                                <Link
+                                                    href="/settings/delete-account"
+                                                    onClick={onClose}
+                                                    className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg text-xs font-bold transition-all border border-rose-500/30 shadow-lg shadow-rose-900/20"
+                                                >
+                                                    START DELETION
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
