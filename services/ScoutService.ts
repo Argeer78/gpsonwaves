@@ -109,27 +109,27 @@ export const ScoutService = {
 // --- Real Data Fetcher ---
 async function fetchRealReefs(lat: number, lng: number): Promise<ScoutSpot[]> {
     try {
-        // WFS Bounding Box (~500m radius = 0.005 deg)
         const offset = 0.005;
         const bbox = `${lng - offset},${lat - offset},${lng + offset},${lat + offset}`;
         const url = `/api/reef-scan?bbox=${bbox}`;
 
-        const res = await fetch(url);
+        // 5-second timeout — Allen Coral Atlas WFS can hang
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         const data = await res.json();
-        // const text = await res.text();
 
         if (data.error) {
             console.warn("WFS Proxy Error:", data.error);
             return [];
         }
 
-        // if (text.trim().startsWith('<')) ... logic removed
-
-        // const data = JSON.parse(text);
         if (!data.features) return [];
 
         return data.features.map((f: any) => {
-            // Map Class to Type
             const class_name = f.properties?.class_name || 'Unknown';
             let type: ScoutSpot['type'] = 'rock';
             if (class_name.includes('Coral') || class_name.includes('Reef')) type = 'reef';
@@ -137,25 +137,27 @@ async function fetchRealReefs(lat: number, lng: number): Promise<ScoutSpot[]> {
             else if (class_name.includes('Sand')) type = 'sand';
             else if (class_name.includes('Rock') || class_name.includes('Rubble')) type = 'rock';
 
-            // Extract Center from Polygon
-            // Simple Approx: First coordinate of first ring
             const coords = f.geometry?.coordinates?.[0]?.[0] || [lng, lat];
-            const spotLng = Array.isArray(coords[0]) ? coords[0][0] : coords[0]; // Handle MultiPolygon
+            const spotLng = Array.isArray(coords[0]) ? coords[0][0] : coords[0];
             const spotLat = Array.isArray(coords[0]) ? coords[0][1] : coords[1];
 
             return {
                 lat: spotLat,
                 lng: spotLng,
                 type: type,
-                depth: 3, // Default low depth for reefs
+                depth: 3,
                 temp: 24,
-                confidence: 100, // It's real data!
+                confidence: 100,
                 reason: `Verified ${class_name} detected via Satellite Analysis (Allen Coral Atlas).`
             } as ScoutSpot;
         });
 
-    } catch (e) {
-        console.warn("Reef Scan Failed:", e);
+    } catch (e: any) {
+        if (e?.name === 'AbortError') {
+            console.warn('Reef scan timed out (5s) — skipping real data, using generated spots only.');
+        } else {
+            console.warn("Reef Scan Failed:", e);
+        }
         return [];
     }
 }

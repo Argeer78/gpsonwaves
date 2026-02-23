@@ -477,7 +477,10 @@ export default function DecisionCard({
                         if (user?.isPro) {
                             setIsScouting(true);
                             ScoutService.scanArea([initialLat, initialLng]).then(spots => {
-                                if (onScoutFound) onScoutFound(spots);
+                                if (onScoutFoundRef.current) onScoutFoundRef.current(spots);
+                                setIsScouting(false);
+                            }).catch(err => {
+                                console.error('Scout scan error:', err);
                                 setIsScouting(false);
                             });
                         } else {
