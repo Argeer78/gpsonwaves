@@ -5,9 +5,9 @@
         ],
         "target": {
             "namespace": "android_app",
-            "package_name": "com.gpsonwaves.app",
+            "package_name": "com.gpsonwaves.twa",
             "sha256_cert_fingerprints": [
-                "REPLACE_WITH_YOUR_RELEASE_KEY_SHA256_FINGERPRINT_FROM_PLAY_CONSOLE"
+                "2D:44:4A:59:60:5B:C9:33:AC:85:49:46:E5:3D:4D:3B:09:18:F6:57:B2:79:38:43:82:06:83:29:2E:32:AD:69"
             ]
         }
     }
