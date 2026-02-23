@@ -66,22 +66,30 @@ export async function GET(request: Request) {
         // 1. Try Mapzen (Smart Sampling for Single Point)
         try {
             if (isSinglePoint) {
-                // Smart Sampling: Check points to detect "water" nearby
+                // Smart Sampling: Fetch all sample points
                 const mapzenData = await fetchDataset('mapzen', `locations=${encodeURIComponent(samples)}`, 'nearest');
                 const results = mapzenData.results || [];
 
-                // Filter for Water: Relaxed threshold (<= 1m elevation is "water enough")
+                // --- LAND CHECK FIRST ---
+                // Always inspect the CENTER pixel first (index 0).
+                // If it is clearly above sea level (> 3m), it's land — don't search neighbours.
+                const centerElevation = results[0]?.elevation;
+                if (typeof centerElevation === 'number' && centerElevation > 3) {
+                    // Unambiguously on land — return LAND immediately
+                    return NextResponse.json({
+                        results: [results[0]],
+                        source: 'mapzen-land'
+                    });
+                }
+
+                // Center pixel is ambiguous (coastal/tidal noise) — find best nearby water pixel
                 const waterPoints = results.filter((r: any) => r.elevation !== null && r.elevation <= 1);
 
-                let bestPoint;
                 if (waterPoints.length > 0) {
                     // Bias towards DEEPEST water found (fixes "too shallow" near shore)
-                    // elevation is negative (-50 is deeper than -2)
                     waterPoints.sort((a: any, b: any) => a.elevation - b.elevation);
-                    bestPoint = waterPoints[0];
-
                     return NextResponse.json({
-                        results: [bestPoint],
+                        results: [waterPoints[0]],
                         source: 'mapzen-smart-9'
                     });
                 } else {

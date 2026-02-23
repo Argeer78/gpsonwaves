@@ -75,10 +75,14 @@ export default function DecisionCard({
     // Derived state for depth loading (reset on coords change)
     useEffect(() => {
         setLoadingDepth(true);
-        // ... (rest of logic in subsequent code)
         setStructureAlert(false);
 
-        // Debounce Network Calls (1s) to prevent 429 Rate Limits
+        // Safety timeout: always clear loading after 10s regardless of API state
+        const safetyTimer = setTimeout(() => {
+            setLoadingDepth(false);
+        }, 10000);
+
+        // Debounce Network Calls (1.5s) to prevent 429 Rate Limits
         const timer = setTimeout(() => {
             // 1. Parallel: Check Depth API AND Check Reef Status AND Check Weather
             Promise.all([
@@ -100,14 +104,13 @@ export default function DecisionCard({
                         source: `Verified ${reefStatus.type}`
                     });
                 } else {
-                    // Normal Depth API
+                    // Normal Depth API result (could be null if API failed/timed out)
                     setDepth(depthData);
                 }
                 setLoadingDepth(false);
+                clearTimeout(safetyTimer);
 
                 // --- Auto-Trigger Scout (Passive Reef Finding) ---
-                // User requirement: "point the reefs without searching"
-                // We silently run the scan and populate markers.
                 if (onScoutFound) {
                     ScoutService.scanArea([initialLat, initialLng]).then(spots => {
                         onScoutFound(spots);
@@ -129,10 +132,14 @@ export default function DecisionCard({
             }).catch(err => {
                 console.error("Analysis failed", err);
                 setLoadingDepth(false);
+                clearTimeout(safetyTimer);
             });
         }, 1500); // 1.5s Debounce
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(safetyTimer);
+        };
     }, [initialLat, initialLng, species, onStructureFound, onScoutFound, user?.isPro]);
 
     const onSave = () => {

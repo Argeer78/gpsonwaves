@@ -20,9 +20,16 @@ export async function getWaterDepth(lat: number, lng: number): Promise<DepthResu
         return null;
     }
 
+    // 2. Abort after 8 seconds (prevents infinite loading on mobile/slow networks)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
     try {
         const normLng = normalizeLng(lng);
-        const response = await fetch(`/api/depth?lat=${lat}&lng=${normLng}`);
+        const response = await fetch(`/api/depth?lat=${lat}&lng=${normLng}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             // Handle Rate Limits (429 or 502 which masks 429)
@@ -32,7 +39,6 @@ export async function getWaterDepth(lat: number, lng: number): Promise<DepthResu
             }
 
             const errDetails = await response.json().catch(() => ({}));
-            // If the error message mentions 429, also trigger breaker
             if (JSON.stringify(errDetails).includes("429")) {
                 rateLimitUntil = Date.now() + 30000;
             }
@@ -46,7 +52,7 @@ export async function getWaterDepth(lat: number, lng: number): Promise<DepthResu
 
         if (typeof elevation !== 'number') return null;
 
-        // Elevation > 1 is land. Elevation <= 1 is treated as water (tides/noise).
+        // Elevation > 1 = land. <= 1 treated as water (coastal/tidal noise)
         if (elevation > 1) {
             return { meters: 0, feet: 0, isLand: true, source: data.source };
         }
@@ -55,14 +61,19 @@ export async function getWaterDepth(lat: number, lng: number): Promise<DepthResu
         const depthFeet = depthMeters * 3.28084;
 
         return {
-            meters: Math.round(depthMeters * 10) / 10, // 1 decimal place
+            meters: Math.round(depthMeters * 10) / 10,
             feet: Math.round(depthFeet),
             isLand: false,
             source: data.source
         };
 
-    } catch (error) {
-        console.error("Failed to fetch depth:", error);
+    } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error?.name === 'AbortError') {
+            console.warn('Depth API timed out (8s). Returning null.');
+        } else {
+            console.error("Failed to fetch depth:", error);
+        }
         return null;
     }
 }
