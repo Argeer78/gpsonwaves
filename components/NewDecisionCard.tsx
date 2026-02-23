@@ -111,12 +111,6 @@ export default function DecisionCard({
                 setLoadingDepth(false);
                 clearTimeout(safetyTimer);
 
-                // Auto-Trigger Scout
-                if (onScoutFoundRef.current) {
-                    ScoutService.scanArea([initialLat, initialLng]).then(spots => {
-                        onScoutFoundRef.current!(spots);
-                    });
-                }
 
                 // Structure Scan (Pro Only)
                 if (depthData && !depthData.isLand && user?.isPro) {

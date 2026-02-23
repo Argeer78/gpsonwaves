@@ -134,6 +134,7 @@ export default function Home() {
         onLocationSelect={(lat: number, lng: number) => {
           setSelectedLocation([lat, lng]);
           setStructures([]);
+          setScoutSpots([]); // Clear old scout results when pin moves
         }}
         structures={structures}
         scoutSpots={scoutSpots}
