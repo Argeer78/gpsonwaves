@@ -1,6 +1,6 @@
 'use client'; // HMR Trigger
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Menu, UserCircle, Crown, LogOut, Shield } from 'lucide-react';
@@ -108,6 +108,21 @@ export default function Home() {
     setSaveModalData(null);
     setIsDrawerOpen(true); // Open drawer to verify save
   };
+
+  // Stable callbacks — prevents DecisionCard useEffect from restarting on every GPS update
+  const handleStructureFound = useCallback((locs: Array<{ lat: number; lng: number }>) => {
+    setStructures(locs);
+  }, []);
+  const handleScoutFound = useCallback((spots: ScoutSpot[]) => {
+    setScoutSpots(spots);
+  }, []);
+  const handleOpenPricing = useCallback((reason: string) => {
+    setPricingReason(reason);
+    setShowPricing(true);
+  }, []);
+  const handleRequestSave = useCallback((data: { lat: number; lng: number; score: number; depth?: number }) => {
+    setSaveModalData(data);
+  }, []);
 
   if (!isClient) return null;
 
@@ -270,13 +285,10 @@ export default function Home() {
         initialLat={selectedLocation[0]}
         initialLng={selectedLocation[1]}
         userLocation={userLocation}
-        onStructureFound={(locs) => setStructures(locs)}
-        onScoutFound={(spots) => setScoutSpots(spots)}
-        onOpenPricing={(reason) => {
-          setPricingReason(reason);
-          setShowPricing(true);
-        }}
-        onRequestSave={(data) => setSaveModalData(data)}
+        onStructureFound={handleStructureFound}
+        onScoutFound={handleScoutFound}
+        onOpenPricing={handleOpenPricing}
+        onRequestSave={handleRequestSave}
       />
 
       <SavedSpotsDrawer

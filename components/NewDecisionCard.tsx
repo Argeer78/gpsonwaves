@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Fish, MapPin, Navigation, Info, Bookmark, Waves, TrendingDown, Wind, Anchor, Search, Lock, Loader2, Sparkles, Minimize2, Maximize2 } from 'lucide-react';
 import { calculateFishability, Species, FishabilityResult } from '@/utils/FishabilityEngine';
 import { saveSpot } from '@/utils/Storage';
@@ -73,6 +73,12 @@ export default function DecisionCard({
     }, [userLocation, initialLat, initialLng, speed]);
 
     // Derived state for depth loading (reset on coords change)
+    // Store callbacks in refs so the effect doesn't restart when parent re-renders
+    const onStructureFoundRef = useRef(onStructureFound);
+    const onScoutFoundRef = useRef(onScoutFound);
+    useEffect(() => { onStructureFoundRef.current = onStructureFound; }, [onStructureFound]);
+    useEffect(() => { onScoutFoundRef.current = onScoutFound; }, [onScoutFound]);
+
     useEffect(() => {
         setLoadingDepth(true);
         setStructureAlert(false);
@@ -84,7 +90,6 @@ export default function DecisionCard({
 
         // Debounce Network Calls (1.5s) to prevent 429 Rate Limits
         const timer = setTimeout(() => {
-            // 1. Parallel: Check Depth API AND Check Reef Status AND Check Weather
             Promise.all([
                 getWaterDepth(initialLat, initialLng),
                 ScoutService.checkLocationType(initialLat, initialLng),
@@ -93,10 +98,7 @@ export default function DecisionCard({
 
                 if (weatherData) setWeather(weatherData);
 
-                // --- Depth Logic with Override ---
                 if (reefStatus.isReef && reefStatus.depth) {
-                    // FOUND REEF: Override Depth!
-                    console.log("Reef Detected! Overriding Depth.");
                     setDepth({
                         meters: reefStatus.depth,
                         feet: Math.round(reefStatus.depth * 3.28),
@@ -104,26 +106,25 @@ export default function DecisionCard({
                         source: `Verified ${reefStatus.type}`
                     });
                 } else {
-                    // Normal Depth API result (could be null if API failed/timed out)
                     setDepth(depthData);
                 }
                 setLoadingDepth(false);
                 clearTimeout(safetyTimer);
 
-                // --- Auto-Trigger Scout (Passive Reef Finding) ---
-                if (onScoutFound) {
+                // Auto-Trigger Scout
+                if (onScoutFoundRef.current) {
                     ScoutService.scanArea([initialLat, initialLng]).then(spots => {
-                        onScoutFound(spots);
+                        onScoutFoundRef.current!(spots);
                     });
                 }
 
-                // --- Structure Scan (Pro Only) ---
+                // Structure Scan (Pro Only)
                 if (depthData && !depthData.isLand && user?.isPro) {
                     setTimeout(() => {
                         scanForStructure(initialLat, initialLng).then(scan => {
                             if (scan.found && scan.locations) {
                                 setStructureAlert(true);
-                                if (onStructureFound) onStructureFound(scan.locations);
+                                if (onStructureFoundRef.current) onStructureFoundRef.current(scan.locations);
                             }
                         }).catch(e => console.warn("Structure scan skipped", e));
                     }, 2000);
@@ -134,13 +135,14 @@ export default function DecisionCard({
                 setLoadingDepth(false);
                 clearTimeout(safetyTimer);
             });
-        }, 1500); // 1.5s Debounce
+        }, 1500);
 
         return () => {
             clearTimeout(timer);
             clearTimeout(safetyTimer);
         };
-    }, [initialLat, initialLng, species, onStructureFound, onScoutFound, user?.isPro]);
+        // Only re-run when coordinates, species, or pro status change — NOT on callback identity changes
+    }, [initialLat, initialLng, species, user?.isPro]);
 
     const onSave = () => {
         if (!result) return;
