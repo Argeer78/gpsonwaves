@@ -1,13 +1,15 @@
 [
     {
         "relation": [
-            "delegate_permission/common.handle_all_urls"
+            "delegate_permission/common.handle_all_urls",
+            "delegate_permission/common.get_login_creds"
         ],
         "target": {
             "namespace": "android_app",
             "package_name": "com.gpsonwaves.twa",
             "sha256_cert_fingerprints": [
-                "2D:44:4A:59:60:5B:C9:33:AC:85:49:46:E5:3D:4D:3B:09:18:F6:57:B2:79:38:43:82:06:83:29:2E:32:AD:69"
+                "2D:44:4A:59:60:5B:C9:33:AC:85:49:46:E5:3D:4D:3B:09:18:F6:57:B2:79:38:43:82:06:83:29:2E:32:AD:69",
+                "D0:4C:C1:7F:A5:6D:4D:02:DC:86:2B:59:AF:30:19:DE:88:69:63:0D:09:CC:9F:CD:F5:7A:DA:C6:04:86:56:7B"
             ]
         }
     }
